@@ -1,0 +1,286 @@
+# Riemann Hypothesis: From the "Narrow Steep Cone" to Rigorous Equivalents
+
+> **Status:** Everything below is a correct *restatement* of the Riemann Hypothesis (RH). None of it is a proof. Each criterion is equivalent to RH, so the hard step is moved, not removed.
+
+---
+
+## 1. Original Claim 
+
+$$\left( \zeta \in \operatorname{End}(\Omega) \land \zeta(s) = \overline{\zeta(1 - \overline{s})} \land \forall \rho \in \mathcal{Z}(\zeta),\ \operatorname{Re}(\zeta(\rho)) = 0 \land E(\sigma) = \alpha \left| \sigma - \tfrac{1}{2} \right|,\ \alpha \gg 1 \right) \implies \forall \rho \in \mathcal{Z}(\zeta),\ \operatorname{Re}(\rho) = \tfrac{1}{2}$$
+
+**Problems identified**
+
+- $E(\sigma)$ is never defined in terms of $\zeta$, so the cone hypothesis effectively assumes the conclusion.
+- "Endomorphism" is undefined: no structure is specified.
+- The reflection condition is not the standard functional equation.
+- $\operatorname{Re}\zeta(\rho)=0$ is trivially true at zeros, since $\zeta(\rho)=0$.
+- "$\alpha\gg1$" is not a precise quantity.
+
+## 2. Corrected Setup
+
+The completed zeta function is entire:
+
+$$\xi(s)=\tfrac12\, s(s-1)\,\pi^{-s/2}\,\Gamma\!\left(\tfrac{s}{2}\right)\zeta(s)$$
+
+- Functional equation: $\xi(s)=\xi(1-s)$
+- Real symmetry: $\xi(s)=\overline{\xi(\bar s)}$
+- Zeros of $\xi$ are exactly the nontrivial zeros of $\zeta$, denoted $\mathcal{Z}(\xi)$, symmetric about the real axis and the line $\operatorname{Re}(s)=\tfrac12$.
+
+## 3. Criterion A: Li's Criterion
+
+**Li coefficients** (sum over nontrivial zeros in conjugate pairs):
+
+$$\lambda_n=\sum_{\rho}\left[1-\left(1-\frac{1}{\rho}\right)^{n}\right]=\frac{1}{(n-1)!}\,\frac{d^{n}}{ds^{n}}\Big[s^{\,n-1}\log\xi(s)\Big]_{s=1}$$
+
+**Statement** (Li 1997; Bombieri–Lagarias 1999):
+
+$$\Big(\forall n\ge 1:\ \lambda_n\ge 0\Big)\iff \forall\rho\in\mathcal{Z}(\xi):\ \operatorname{Re}(\rho)=\tfrac12$$
+
+**Why it works.** Under $w=1-1/\rho$,
+
+$$|w|=\frac{|\rho-1|}{|\rho|}=1\iff \operatorname{Re}(\rho)=\tfrac12$$
+
+so the critical line maps to the unit circle.
+
+- If RH holds, every $|w|=1$ and each $\lambda_n>0$.
+- If a zero is off the line, its partner gives $|w|>1$. That term grows exponentially in $n$ and rotates in phase, forcing $\lambda_n<0$ for some $n$.
+
+**Known results**
+
+- $\lambda_1 = 1+\tfrac{\gamma}{2}-\tfrac12\log 4\pi \approx 0.0231>0$
+- $\lambda_n>0$ verified numerically for a large range of $n$.
+- Under RH: $\lambda_n \sim \tfrac{n}{2}\left(\log n - 1 + \gamma - \log 2\pi\right)$.
+- Proving $\lambda_n\ge0$ for all $n$ unconditionally is equivalent to RH.
+
+## 4. Criterion B: Monotonicity of $|\xi|$ (squire rigorous "cone")
+
+Fix a height $t$ and set $E_t(\sigma)=\log|\xi(\sigma+it)|$.
+
+### 4.1 What the cone idea becomes
+
+- By $\xi(s)=\xi(1-s)$ and real symmetry, $E_t(\sigma)$ is **even** about $\sigma=\tfrac12$. A cone with vertex at $\tfrac12$ is therefore the natural picture.
+- Between zeros, $E_t$ is **smooth** at $\tfrac12$ with slope exactly $0$. So the subdifferential form $[-\alpha,\alpha]\subseteq\partial E(\tfrac12)$ is **false** there. Numerically, the slope at $\sigma=\tfrac12$ is about $10^{-22}$ for $t=5,10,20,30$.
+- The steepness appears only **at zeros**, and it is a pole, not a linear cone.
+
+### 4.2 Slope as a sum over zeros
+
+$$\frac{\partial}{\partial\sigma}\log|\xi(\sigma+it)|=\operatorname{Re}\frac{\xi'}{\xi}(s)=\sum_{\rho}\operatorname{Re}\frac{1}{s-\rho}$$
+
+A zero $\rho=\tfrac12+i\gamma$ on the line contributes
+
+$$\operatorname{Re}\frac{1}{s-\rho}=\frac{\sigma-\tfrac12}{|s-\rho|^2}$$
+
+which is $\approx 1/\delta$ at distance $\delta=\sigma-\tfrac12$ when $t=\gamma$. The "$\alpha\gg1$" of the original cone is really a logarithmic spike of unbounded steepness at each zero.
+
+**Numerical check near the first zero** ($\gamma\approx14.1347$, $t=\gamma$):
+
+| $\delta$ | $\operatorname{Re}\,\xi'/\xi$ | $1/\delta$ |
+|---|---|---|
+| 0.10 | 10.0068 | 10 |
+| 0.05 | 20.0034 | 20 |
+| 0.01 | 100.0007 | 100 |
+
+### 4.3 The criterion
+
+$$\textbf{RH}\iff \operatorname{Re}\frac{\xi'}{\xi}(\sigma+it)>0\quad\text{for all }\sigma>\tfrac12,\ t\in\mathbb{R}$$
+
+Equivalently, $|\xi(\sigma+it)|$ is strictly increasing in $\sigma$ for $\sigma>\tfrac12$ at every fixed $t$.
+
+- **(⇒)** Under RH every zero contributes a positive term for $\sigma>\tfrac12$.
+- **(⇐)** A zero off the line at $\beta>\tfrac12$ puts a pole of $\operatorname{Re}\frac{1}{s-\rho}$ there, so the slope goes negative on one side of it.
+
+**Numerical scan** ($t\in[0.1,60]$, 1200 points), minimum of $\operatorname{Re}\,\xi'/\xi$:
+
+| $\sigma$ | Minimum | Attained at |
+|---|---|---|
+| 0.51 | 0.0005 | $t=0.1$ |
+| 0.55 | 0.0023 | $t=0.1$ |
+| 0.60 | 0.0046 | $t=0.1$ |
+| 0.75 | 0.0116 | $t=0.1$ |
+
+The slope stays positive throughout, consistent with RH on this range. This is not a proof, since the criterion must hold for all $t$.
+
+### 4.4 What does not help
+
+- **Subharmonicity:** $\log|\xi|$ is subharmonic everywhere, with or without off-line zeros, so it carries no location information.
+- **Pointwise convexity in $\sigma$:** $\partial_\sigma^2\log|\xi|=-\partial_t^2\log|\xi|$ has no fixed sign.
+
+## 5. Mapping the Original Idea to Rigorous Statements
+
+| Original idea | Rigorous counterpart |
+|---|---|
+| "Endomorphism" structure | $\xi$ entire |
+| Reflection axis $\sigma=\tfrac12$ | $\xi(s)=\xi(1-s)$ |
+| $\operatorname{Re}\zeta(\rho)=0$ | Dropped (trivial) |
+| Narrow steep cone, $\alpha\gg1$ | $\operatorname{Re}\,\xi'/\xi>0$ for $\sigma>\tfrac12$ (unbounded steepness near zeros) |
+| Subdifferential $[-\alpha,\alpha]$ | False between zeros; slope is $0$ at $\sigma=\tfrac12$ |
+| Implication to $\operatorname{Re}\rho=\tfrac12$ | Equivalent to RH, not a derivation of it |
+
+## 6. Other Equivalent Forms
+
+- Robin's inequality for the divisor function.
+- de Bruijn–Newman constant: $\Lambda\ge0$ is proven (Rodgers–Tao); $\Lambda\le0$ is equivalent to RH.
+
+## 7. Numerical Results (Steps 1 and 2 carried out)
+
+![Numerics](rh_numerics.png)
+
+**Monotonicity scan.** $t\in[0.05,300]$ in steps of $0.05$, at $\sigma\in\{0.501,0.51,0.55,0.6,0.75\}$. $\operatorname{Re}\,\xi'/\xi$ was positive at every point (0 non-positive values). The minimum of $\operatorname{Re}\,\xi'/\xi\,/\,(\sigma-\tfrac12)$ is about $0.046$, attained as $t\to0$, and is the same for every $\sigma$ tested. Spikes of size $\sim 1/\delta$ occur at the zeros.
+
+**Li coefficients.** Computed from the Taylor series of $\log\xi$ at $s=1$ (via a 512-point contour on $|s-1|=10$, 80-digit arithmetic), using $\lambda_n=n\sum_{k=1}^{n}\binom{n-1}{k-1}c_k$ where $\log\xi(1+u)=\sum c_k u^k$.
+
+| $n$ | $\lambda_n$ | RH asymptotic |
+|---|---|---|
+| 1 | 0.02310 | −1.130 |
+| 2 | 0.09235 | −1.568 |
+| 5 | 0.5755 | −1.628 |
+| 10 | 2.2793 | 0.210 |
+| 20 | 8.7693 | 7.351 |
+| 50 | 43.531 | 41.284 |
+| 100 | 118.60 | 117.23 |
+| 150 | 207.68 | 206.25 |
+
+All $\lambda_n$ for $1\le n\le150$ are positive, $\lambda_1$ matches the closed form, and the gap to the asymptotic shrinks in relative terms. This is consistent with RH but proves nothing, since the criterion needs all $n$.
+
+## 8. Stress Test: Planting a Fake Off-Line Zero
+
+To see what the two criteria can actually detect, I added a hypothetical zero quadruple $\beta\pm i\gamma,\ 1-\beta\pm i\gamma$ (as required by the symmetries) to the real zero set and asked when each test would notice.
+
+![Planted zero](rh_planted_zero.png)
+
+**Li test.** The planted zero $1-\beta+i\gamma$ maps to $w$ with $|w|>1$, and its contribution grows like $|w|^n$. The coefficient $\lambda_n$ first goes negative when this growth overtakes the $\tfrac n2\log n$ baseline. Baseline: exact $\lambda_n$ for $n\le150$, the RH asymptotic beyond. The two removed on-line pairs at $\gamma\pm1$ are subtracted.
+
+| $\gamma$ | $\beta=0.55$ | $\beta=0.6$ | $\beta=0.75$ |
+|---|---|---|---|
+| 14.2 | $4.65\times10^{4}$ | $2.15\times10^{4}$ | $7.7\times10^{3}$ |
+| 100 | $3.2\times10^{6}$ | $1.5\times10^{6}$ | $5.7\times10^{5}$ |
+| 1,000 | $4.3\times10^{8}$ | $2.1\times10^{8}$ | $7.8\times10^{7}$ |
+| 10,000 | $5.3\times10^{10}$ | $2.6\times10^{10}$ | $9.9\times10^{9}$ |
+| 100,000 | $\approx6\times10^{12}$ | $\approx3\times10^{12}$ | $\approx1.2\times10^{12}$ |
+
+(First negative $n$; the last row is the amplitude-crossing estimate $n^*$, not brute-forced. Runs were checked by brute-force scan for $\gamma\le10^4$.)
+
+The required $n$ scales roughly like $\gamma^2/(2\beta-1)$ times a logarithm. Even a zero as low as $\gamma=14.2$ off the line by only $0.05$ would not be seen until $n\approx4.6\times10^4$, far beyond the $n\le150$ checked above.
+
+**Monotonicity test.** With the quadruple at $\gamma=100$, $\beta=0.6$, the slope $\operatorname{Re}\,\xi'/\xi$ at $\sigma=0.55$ goes negative only for $t\in[99.916,\,100.084]$, a window about $0.17$ wide. At $\beta=0.75$, $\sigma=0.6$ the window is about $0.41$ wide. So the scan needs a step of roughly $0.05$ or finer and must reach $t\approx\gamma$, i.e. about $20\gamma$ evaluations of $\zeta$.
+
+**What this shows**
+
+- Both tests do detect a planted zero, so they are not vacuous.
+- The monotonicity test is much cheaper per height: it needs only a scan up to $\gamma$, whereas Li's test needs $n\sim\gamma^2$.
+- Our results ($t\le300$, $n\le150$) rule out an off-line zero with $\gamma\lesssim300$ via the scan. They say nothing about higher zeros. The known verification that the first $\sim10^{13}$ zeros lie on the line is far stronger than anything run here.
+- Finite checks can never prove RH. They can only push the lowest possible counterexample higher.
+
+## 9. State of the Evidence (searched November 2026)
+
+### 9.1 Proportion of zeros proven to lie on the critical line
+
+| Year | Result | Proportion on the line |
+|---|---|---|
+| 1914 | Hardy | Infinitely many |
+| 1942 | Selberg | A positive proportion |
+| 1974 | Levinson | > 1/3 |
+| 1989 | Conrey | > 2/5 (about 40.8%) |
+| 2011-12 | Bui–Conrey–Young; Feng | > 41%; > 41.28% |
+| 2019-20 | Pratt–Robles–Zaharescu–Zeindler | > 5/12 (about 41.7%) |
+| **Aug 2026** | **Alpöge–Furman (argument produced by an internal Claude model)** | **> 2/3 are simple *and* on the line; later optimized to > 67.25%** |
+
+- The 2026 result is on arXiv (2608.13637), with a companion Lean 4 formalization released by Anthropic. The Breakthrough Tracker lists it as a Lean-verified preprint, **not yet peer reviewed** (as of its August 2026 entry).
+- Lamzouri (arXiv 2609.02882, September 2026) gives an independent, shorter proof of the same bounds (> 67.25% simple and on the line, > 83.62% distinct). His appendix cites Lean certificates for part of his argument from Axiom Math's AxiomProver.
+- The method uses pair correlation (Montgomery–Taylor constant $C_0=\tfrac32-\tfrac1{\sqrt2}\cot\tfrac1{\sqrt2}\approx0.6725$) and an explicit-formula second moment. It is insensitive to $o(N)$ off-line zeros, so it **cannot** rule out a sparse set of exceptions.
+- It does **not** prove RH. About 32.7% of zeros are still not shown to be on the line.
+
+### 9.2 Computation
+
+- Platt–Trudgian (2021): all $12{,}363{,}153{,}437{,}138$ zeros with height up to $3{,}000{,}175{,}332{,}800$ lie on the critical line and are simple.
+- This is the range in which Section 8 shows only a violation at huge height or huge $n$ could hide. Nothing in our small-scale checks competes with it.
+
+### 9.3 Zero-free regions and zero density
+
+- **Classical region:** no zeros for $\sigma \ge 1-\dfrac{1}{5.558691\log|t|}$, $|t|\ge2$ (Mossinghoff–Trudgian–Yang, 2024).
+- **Vinogradov–Korobov region:** no zeros for $\sigma\ge1-\dfrac{c}{(\log t)^{2/3}(\log\log t)^{1/3}}$; Ford's explicit constant is about 57.54.
+- **Zero density:** the recent exponent $30/13$ in $N(\sigma,T)\ll T^{b(1-\sigma)}$ is cited (Guth–Maynard, 2024) as the current best, and it bounds how many zeros can sit away from the line, not whether any do.
+- All of these confine possible off-line zeros to the strip near $\sigma=1$ (and by symmetry near $\sigma=0$), leaving the middle of the strip, the region where RH is decided, open.
+
+### 9.4 How this fits our two criteria
+
+- **Li's criterion** is global: it needs $\lambda_n\ge0$ for all $n$. The proportion results give no direct handle on $\lambda_n$.
+- **Monotonicity** ($\operatorname{Re}\,\xi'/\xi>0$ for $\sigma>\tfrac12$) is known on $\sigma\ge1$. The open part is $\tfrac12<\sigma<1$, which is where the zero-free regions leave room.
+- A positive-proportion theorem and a "no zeros off the line" theorem are different in kind. The first can be approached by averaging (moments, pair correlation); RH needs control of every single zero.
+
+## 10. Testing the Pair-Correlation Certificate
+
+The 2026 results rest on an inequality (Lamzouri, Prop. 2.1). For a finite multiset $\mathcal Z$ invariant under complex conjugation, and $K=\widehat{\eta^{2}}$ with $\eta$ even and compactly supported,
+
+$$\#\{\text{simple real elements}\}\ \ge\ 2|\mathcal Z|-\sum_{z,s\in\mathcal Z}K(z-s)^2 .$$
+
+For zeta, $z_\rho=i(\rho-\tfrac12)\tfrac{\log T}{2\pi}$ is real exactly when $\operatorname{Re}\rho=\tfrac12$. The theorem needs $f=\eta^2$ supported in $[-\tfrac12,\tfrac12]$, so that $f*f$ lies in $[-1,1]$, where the unconditional pair-correlation formula applies. I use the Montgomery–Taylor kernel
+
+$$f_0(x)=\frac{\cos(\sqrt2\,x)}{\sqrt2\,\sin(1/\sqrt2)}\ \ (|x|\le\tfrac12),\qquad K=\widehat{f_0},$$
+
+whose asymptotic constant is $C_{\rm MT}=\tfrac12+\tfrac1{\sqrt2}\cot\tfrac1{\sqrt2}\approx1.3275$, giving a certified fraction $2-C_{\rm MT}\approx0.6725$. (Lamzouri smooths $f_0$ near the endpoints; I use it unsmoothed and truncate pair sums at $|z-s|\le200$, which changes the sums by roughly $10^{-3}$ relatively.)
+
+> **Correction.** An earlier draft of this section used the Fejér kernel $K=\operatorname{sinc}^2$ and described it as giving Montgomery's constant $4/3$. That was wrong: that $K$ comes from a $\lambda=1$ window outside the range of the unconditional formula, and the quantity summed is $K^2$, not $K$. The inequality itself holds for any such kernel, so the sanity check was still valid, but the numbers below replace the earlier ones.
+
+### 10.1 Planted off-line zeros (first 1000 zeros, $T\approx1419$)
+
+Two adjacent zeros are replaced by $\tfrac12\pm d+i\tilde\gamma$ at their midpoint, so $N$ is unchanged.
+
+![Pair correlation](rh_pair_correlation.png)
+
+| Moved off line | $d=0.001$ | $d=0.01$ | $d=0.1$ | $d=0.3$ | True simple-on-line |
+|---|---|---|---|---|---|
+| 0% (baseline) | 0.901 | 0.901 | 0.901 | 0.901 | 1.000 |
+| 1% | 0.892 | 0.891 | 0.890 | 0.866 | 0.990 |
+| 5% | 0.854 | 0.855 | 0.849 | 0.721 | 0.950 |
+| 10% | 0.810 | 0.810 | 0.800 | 0.543 | 0.900 |
+| 20% | 0.722 | 0.717 | 0.683 | 0.179 | 0.800 |
+| 30% | 0.627 | 0.629 | 0.579 | −0.186 | 0.700 |
+
+(Entries are the certified lower bound divided by $N$.)
+
+1. **The inequality held in all 24 configurations** (certified bound ≤ true count).
+2. **Near-line off-line zeros look like double zeros.** The symmetry puts $z$ and $\bar z$ at the same real position, separated vertically by $2d\log T/2\pi$. For $d\lesssim0.01$ that is about $0.02$, far below the kernel's resolution. The bound drops one-for-one with the true count, and $d=0.001$ is indistinguishable from $d=0.01$.
+3. **Far-off zeros are penalized.** At $d=0.3$, moving 30% of zeros pushes the bound below zero, and the penalty grows quickly with $d$. This is the mechanism behind the horizontal-distribution results (Baluyot–Goldston–Suriajaya–Turnage-Butterbaugh): most zeros must lie in a box of width about $1/\log T$ around the line, though not necessarily on it.
+
+### 10.2 The real zeros at larger height
+
+Zeros were found by sign changes of the Riemann–Siegel $Z$-function (first 1000 from mpmath). The method reproduced the first 971 zeros above $t=100$ with maximum error $0.002$, and the count up to $3\times10^5$ is $466{,}608$ against $466{,}659$ from the smoothed counting formula. The sum $\sum K(z-s)^2$ runs over all zeros with $0<\gamma\le T$, $z=\gamma\log T/2\pi$.
+
+| $T$ | $N$ | $\log T$ | $\sum K^2/N$ | Certified fraction $2-\sum K^2/N$ |
+|---|---|---|---|---|
+| $10^3$ | 649 | 6.91 | 1.0892 | 0.911 |
+| $3\times10^3$ | 2,469 | 8.01 | 1.1132 | 0.887 |
+| $10^4$ | 10,142 | 9.21 | 1.1352 | 0.865 |
+| $3\times10^4$ | 35,673 | 10.31 | 1.1532 | 0.847 |
+| $10^5$ | 138,059 | 11.51 | 1.1695 | 0.831 |
+| $3\times10^5$ | 466,608 | 12.61 | 1.1823 | 0.818 |
+
+**Reading the table**
+
+- The certified fraction falls steadily toward the theoretical $0.6725$, but only like $1/\log T$. At $T=3\times10^5$ it is still $0.818$.
+- Fitting $a+b/\log T$ and $a+b/\log T+c/\log^2T$ to these six points gives limits of $\sum K^2/N\approx1.293$ and $1.351$, which bracket $C_{\rm MT}=1.3275$. This agrees with theory, though it is only an extrapolation.
+- All $466{,}608$ zeros here are on the line, so these are baseline values for the true zeta. The bound is a theorem about the real zeros, not a measurement of them.
+
+### 10.3 Conclusion
+
+The pair-correlation method certifies a proportion by showing that off-line or multiple zeros cannot be too numerous, while staying blind to any single zero or any sparse set. That is why it cannot approach RH, which requires every zero to be on the line.
+
+## 11. Suggested Next Steps
+
+1. Push both computations further (larger $t$ and $n$).
+2. Test the $\xi'/\xi$ monotonicity and Li coefficients against zeros at these larger heights, or replace the unsmoothed kernel by Lamzouri's smoothed one.
+
+## References
+
+- L. Alpöge and R. Furman, "More than two thirds of the zeros of the Riemann zeta function are simple and on the critical line," arXiv:2608.13637 (2026).
+- Y. Lamzouri, "A new proof that more than 2/3 of the zeros of the Riemann zeta function are simple and on the critical line," arXiv:2609.02882 (2026).
+- K. Pratt, N. Robles, A. Zaharescu, D. Zeindler, "More than five-twelfths of the zeros of ζ are on the critical line," *Res. Math. Sci.* 7 (2020).
+- D. Platt and T. Trudgian, "The Riemann hypothesis is true up to $3\cdot10^{12}$," *Bull. London Math. Soc.* 53 (2021).
+- M. Mossinghoff, T. Trudgian, A. Yang, "Explicit zero-free regions for the Riemann zeta-function," *Res. Number Theory* 10 (2024).
+- K. Ford, "Zero-free regions for the Riemann zeta function," in *Number Theory for the Millennium II* (2002).
+- D. Goldston and A. Suriajaya, "Zeta zeros on the critical line," arXiv:2511.20059.
+
+- X.-J. Li, "The positivity of a sequence of numbers and the Riemann hypothesis," *J. Number Theory* 65 (1997).
+- E. Bombieri and J. Lagarias, "Complements to Li's criterion for the Riemann hypothesis," *J. Number Theory* 77 (1999).
+- B. Rodgers and T. Tao, "The de Bruijn–Newman constant is non-negative," *Forum Math. Pi* 8 (2020).
