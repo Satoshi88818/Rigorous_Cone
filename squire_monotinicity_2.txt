@@ -1,0 +1,154 @@
+# Riemann Hypothesis: From the "Narrow Steep Cone" to Rigorous Equivalents
+
+> **Status:** Everything below is a correct *restatement* of the Riemann Hypothesis (RH). None of it is a proof. Each criterion is equivalent to RH, so the hard step is moved, not removed.
+
+---
+
+## 1. Original Claim 
+
+$$\left( \zeta \in \operatorname{End}(\Omega) \land \zeta(s) = \overline{\zeta(1 - \overline{s})} \land \forall \rho \in \mathcal{Z}(\zeta),\ \operatorname{Re}(\zeta(\rho)) = 0 \land E(\sigma) = \alpha \left| \sigma - \tfrac{1}{2} \right|,\ \alpha \gg 1 \right) \implies \forall \rho \in \mathcal{Z}(\zeta),\ \operatorname{Re}(\rho) = \tfrac{1}{2}$$
+
+**Problems identified**
+
+- $E(\sigma)$ is never defined in terms of $\zeta$, so the cone hypothesis effectively assumes the conclusion.
+- "Endomorphism" is undefined: no structure is specified.
+- The reflection condition is not the standard functional equation.
+- $\operatorname{Re}\zeta(\rho)=0$ is trivially true at zeros, since $\zeta(\rho)=0$.
+- "$\alpha\gg1$" is not a precise quantity.
+
+## 2. Corrected Setup
+
+The completed zeta function is entire:
+
+$$\xi(s)=\tfrac12\, s(s-1)\,\pi^{-s/2}\,\Gamma\!\left(\tfrac{s}{2}\right)\zeta(s)$$
+
+- Functional equation: $\xi(s)=\xi(1-s)$
+- Real symmetry: $\xi(s)=\overline{\xi(\bar s)}$
+- Zeros of $\xi$ are exactly the nontrivial zeros of $\zeta$, denoted $\mathcal{Z}(\xi)$, symmetric about the real axis and the line $\operatorname{Re}(s)=\tfrac12$.
+
+## 3. Criterion A: Li's Criterion
+
+**Li coefficients** (sum over nontrivial zeros in conjugate pairs):
+
+$$\lambda_n=\sum_{\rho}\left[1-\left(1-\frac{1}{\rho}\right)^{n}\right]=\frac{1}{(n-1)!}\,\frac{d^{n}}{ds^{n}}\Big[s^{\,n-1}\log\xi(s)\Big]_{s=1}$$
+
+**Statement** (Li 1997; Bombieri–Lagarias 1999):
+
+$$\Big(\forall n\ge 1:\ \lambda_n\ge 0\Big)\iff \forall\rho\in\mathcal{Z}(\xi):\ \operatorname{Re}(\rho)=\tfrac12$$
+
+**Why it works.** Under $w=1-1/\rho$,
+
+$$|w|=\frac{|\rho-1|}{|\rho|}=1\iff \operatorname{Re}(\rho)=\tfrac12$$
+
+so the critical line maps to the unit circle.
+
+- If RH holds, every $|w|=1$ and each $\lambda_n>0$.
+- If a zero is off the line, its partner gives $|w|>1$. That term grows exponentially in $n$ and rotates in phase, forcing $\lambda_n<0$ for some $n$.
+
+**Known results**
+
+- $\lambda_1 = 1+\tfrac{\gamma}{2}-\tfrac12\log 4\pi \approx 0.0231>0$
+- $\lambda_n>0$ verified numerically for a large range of $n$.
+- Under RH: $\lambda_n \sim \tfrac{n}{2}\left(\log n - 1 + \gamma - \log 2\pi\right)$.
+- Proving $\lambda_n\ge0$ for all $n$ unconditionally is equivalent to RH.
+
+## 4. Criterion B: Monotonicity of $|\xi|$ (squire rigorous "cone")
+
+Fix a height $t$ and set $E_t(\sigma)=\log|\xi(\sigma+it)|$.
+
+### 4.1 What the cone idea becomes
+
+- By $\xi(s)=\xi(1-s)$ and real symmetry, $E_t(\sigma)$ is **even** about $\sigma=\tfrac12$. A cone with vertex at $\tfrac12$ is therefore the natural picture.
+- Between zeros, $E_t$ is **smooth** at $\tfrac12$ with slope exactly $0$. So the subdifferential form $[-\alpha,\alpha]\subseteq\partial E(\tfrac12)$ is **false** there. Numerically, the slope at $\sigma=\tfrac12$ is about $10^{-22}$ for $t=5,10,20,30$.
+- The steepness appears only **at zeros**, and it is a pole, not a linear cone.
+
+### 4.2 Slope as a sum over zeros
+
+$$\frac{\partial}{\partial\sigma}\log|\xi(\sigma+it)|=\operatorname{Re}\frac{\xi'}{\xi}(s)=\sum_{\rho}\operatorname{Re}\frac{1}{s-\rho}$$
+
+A zero $\rho=\tfrac12+i\gamma$ on the line contributes
+
+$$\operatorname{Re}\frac{1}{s-\rho}=\frac{\sigma-\tfrac12}{|s-\rho|^2}$$
+
+which is $\approx 1/\delta$ at distance $\delta=\sigma-\tfrac12$ when $t=\gamma$. The "$\alpha\gg1$" of the original cone is really a logarithmic spike of unbounded steepness at each zero.
+
+**Numerical check near the first zero** ($\gamma\approx14.1347$, $t=\gamma$):
+
+| $\delta$ | $\operatorname{Re}\,\xi'/\xi$ | $1/\delta$ |
+|---|---|---|
+| 0.10 | 10.0068 | 10 |
+| 0.05 | 20.0034 | 20 |
+| 0.01 | 100.0007 | 100 |
+
+### 4.3 The criterion
+
+$$\textbf{RH}\iff \operatorname{Re}\frac{\xi'}{\xi}(\sigma+it)>0\quad\text{for all }\sigma>\tfrac12,\ t\in\mathbb{R}$$
+
+Equivalently, $|\xi(\sigma+it)|$ is strictly increasing in $\sigma$ for $\sigma>\tfrac12$ at every fixed $t$.
+
+- **(⇒)** Under RH every zero contributes a positive term for $\sigma>\tfrac12$.
+- **(⇐)** A zero off the line at $\beta>\tfrac12$ puts a pole of $\operatorname{Re}\frac{1}{s-\rho}$ there, so the slope goes negative on one side of it.
+
+**Numerical scan** ($t\in[0.1,60]$, 1200 points), minimum of $\operatorname{Re}\,\xi'/\xi$:
+
+| $\sigma$ | Minimum | Attained at |
+|---|---|---|
+| 0.51 | 0.0005 | $t=0.1$ |
+| 0.55 | 0.0023 | $t=0.1$ |
+| 0.60 | 0.0046 | $t=0.1$ |
+| 0.75 | 0.0116 | $t=0.1$ |
+
+The slope stays positive throughout, consistent with RH on this range. This is not a proof, since the criterion must hold for all $t$.
+
+### 4.4 What does not help
+
+- **Subharmonicity:** $\log|\xi|$ is subharmonic everywhere, with or without off-line zeros, so it carries no location information.
+- **Pointwise convexity in $\sigma$:** $\partial_\sigma^2\log|\xi|=-\partial_t^2\log|\xi|$ has no fixed sign.
+
+## 5. Mapping the Original Idea to Rigorous Statements
+
+| Original idea | Rigorous counterpart |
+|---|---|
+| "Endomorphism" structure | $\xi$ entire |
+| Reflection axis $\sigma=\tfrac12$ | $\xi(s)=\xi(1-s)$ |
+| $\operatorname{Re}\zeta(\rho)=0$ | Dropped (trivial) |
+| Narrow steep cone, $\alpha\gg1$ | $\operatorname{Re}\,\xi'/\xi>0$ for $\sigma>\tfrac12$ (unbounded steepness near zeros) |
+| Subdifferential $[-\alpha,\alpha]$ | False between zeros; slope is $0$ at $\sigma=\tfrac12$ |
+| Implication to $\operatorname{Re}\rho=\tfrac12$ | Equivalent to RH, not a derivation of it |
+
+## 6. Other Equivalent Forms
+
+- Robin's inequality for the divisor function.
+- de Bruijn–Newman constant: $\Lambda\ge0$ is proven (Rodgers–Tao); $\Lambda\le0$ is equivalent to RH.
+
+## 7. Numerical Results (Steps 1 and 2 carried out)
+
+![Numerics](rh_numerics.png)
+
+**Monotonicity scan.** $t\in[0.05,300]$ in steps of $0.05$, at $\sigma\in\{0.501,0.51,0.55,0.6,0.75\}$. $\operatorname{Re}\,\xi'/\xi$ was positive at every point (0 non-positive values). The minimum of $\operatorname{Re}\,\xi'/\xi\,/\,(\sigma-\tfrac12)$ is about $0.046$, attained as $t\to0$, and is the same for every $\sigma$ tested. Spikes of size $\sim 1/\delta$ occur at the zeros.
+
+**Li coefficients.** Computed from the Taylor series of $\log\xi$ at $s=1$ (via a 512-point contour on $|s-1|=10$, 80-digit arithmetic), using $\lambda_n=n\sum_{k=1}^{n}\binom{n-1}{k-1}c_k$ where $\log\xi(1+u)=\sum c_k u^k$.
+
+| $n$ | $\lambda_n$ | RH asymptotic |
+|---|---|---|
+| 1 | 0.02310 | −1.130 |
+| 2 | 0.09235 | −1.568 |
+| 5 | 0.5755 | −1.628 |
+| 10 | 2.2793 | 0.210 |
+| 20 | 8.7693 | 7.351 |
+| 50 | 43.531 | 41.284 |
+| 100 | 118.60 | 117.23 |
+| 150 | 207.68 | 206.25 |
+
+All $\lambda_n$ for $1\le n\le150$ are positive, $\lambda_1$ matches the closed form, and the gap to the asymptotic shrinks in relative terms. This is consistent with RH but proves nothing, since the criterion needs all $n$.
+
+## 8. Suggested Next Steps
+
+1. Push both computations further (larger $t$ and $n$).
+2. Study unconditional partial results (zero-free regions, density estimates, zeros verified on the line).
+
+## References
+
+- X.-J. Li, "The positivity of a sequence of numbers and the Riemann hypothesis," *J. Number Theory* 65 (1997).
+- E. Bombieri and J. Lagarias, "Complements to Li's criterion for the Riemann hypothesis," *J. Number Theory* 77 (1999).
+- B. Rodgers and T. Tao, "The de Bruijn–Newman constant is non-negative," *Forum Math. Pi* 8 (2020).
