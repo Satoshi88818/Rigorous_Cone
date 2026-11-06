@@ -1,0 +1,79 @@
+# Li's Criterion for the Riemann Hypothesis
+
+*A well-posed replacement for the "Narrow Steep Cone Condition."*
+
+> **Note:** Li's criterion is an **equivalence** with the Riemann Hypothesis (RH), not a proof of it. Establishing the hypothesis side unconditionally is as hard as RH itself.
+
+---
+
+## 1. Setup
+
+The completed zeta function is entire:
+
+$$\xi(s)=\tfrac12\, s(s-1)\,\pi^{-s/2}\,\Gamma\!\left(\tfrac{s}{2}\right)\zeta(s)$$
+
+It satisfies:
+
+- **Functional equation:** $\xi(s)=\xi(1-s)$
+- **Real symmetry:** $\xi(s)=\overline{\xi(\bar s)}$
+
+The zeros of $\xi$ are exactly the nontrivial zeros of $\zeta$, denoted $\mathcal{Z}(\xi)$. They are symmetric about both the real axis and the line $\operatorname{Re}(s)=\tfrac12$.
+
+## 2. Li Coefficients
+
+For $n\ge 1$, with the sum taken over nontrivial zeros $\rho$ in conjugate pairs:
+
+$$\lambda_n=\sum_{\rho}\left[1-\left(1-\frac{1}{\rho}\right)^{n}\right]=\frac{1}{(n-1)!}\,\frac{d^{n}}{ds^{n}}\Big[s^{\,n-1}\log\xi(s)\Big]_{s=1}$$
+
+## 3. Formal Statement (Li 1997; Bombieri–Lagarias 1999)
+
+$$\Big(\xi \text{ entire}\ \land\ \xi(s)=\xi(1-s)\ \land\ \forall n\ge 1:\ \lambda_n\ge 0\Big)\iff \forall\rho\in\mathcal{Z}(\xi):\ \operatorname{Re}(\rho)=\tfrac12$$
+
+## 4. Component Definitions
+
+| Component | Meaning |
+|---|---|
+| $\xi$ entire | Completed zeta function has no poles |
+| $\xi(s)=\xi(1-s)$ | Reflection symmetry about $\sigma=\tfrac12$ (replaces the earlier "endomorphism" and nonstandard reflection condition) |
+| $\lambda_n \ge 0$ | Positivity of all Li coefficients (replaces the "cone" condition) |
+| $\mathcal{Z}(\xi)$ | Nontrivial zeros of $\zeta$ |
+| Conclusion | Every nontrivial zero lies on the critical line |
+
+## 5. Why It Works
+
+Define the map $\rho \mapsto w = 1-\dfrac1\rho$. Then
+
+$$|w|=\frac{|\rho-1|}{|\rho|}=1 \iff \operatorname{Re}(\rho)=\tfrac12$$
+
+so the critical line maps onto the unit circle.
+
+- **If RH holds:** every $|w|=1$, so each term $1-w^n$ has nonnegative real part contribution and $\lambda_n>0$.
+- **If RH fails:** a zero off the line has a partner $1-\rho$ with $|w|>1$. Its contribution grows exponentially in $n$ and rotates in phase, forcing $\lambda_n<0$ for some $n$.
+
+## 6. Known Results
+
+- $\lambda_1 = 1+\dfrac{\gamma}{2}-\dfrac12\log 4\pi \approx 0.0231 > 0$
+- $\lambda_n>0$ has been verified numerically for a large range of $n$.
+- Under RH: $\lambda_n \sim \dfrac{n}{2}\left(\log n - 1 + \gamma - \log 2\pi\right)$
+- Unconditionally proving $\lambda_n\ge 0$ for all $n$ is equivalent to RH.
+
+## 7. Equivalent Forms
+
+**Zero-location form.** Under the map $w=1-1/\rho$:
+
+$$\forall\rho\in\mathcal{Z}(\xi):\ \left|1-\frac1\rho\right|=1\iff \forall\rho\in\mathcal{Z}(\xi):\ \operatorname{Re}(\rho)=\tfrac12$$
+
+**Related criteria.**
+
+- Robin's inequality (for the divisor function)
+- de Bruijn–Newman constant: $\Lambda\ge 0$ is proven (Rodgers–Tao, 2018); $\Lambda\le 0$ is equivalent to RH
+
+## 8. Relation to the Original "Cone Condition"
+
+The original condition $E(\sigma)=\alpha\left|\sigma-\tfrac12\right|$ with $\alpha\gg1$ was never defined in terms of $\zeta$, so it effectively assumed the conclusion. Li's criterion fixes this by replacing it with a precise, checkable hypothesis, $\lambda_n \ge 0$ for all $n$. The difficulty is not removed, only moved to proving that positivity.
+
+## References
+
+- X.-J. Li, "The positivity of a sequence of numbers and the Riemann hypothesis," *J. Number Theory* 65 (1997).
+- E. Bombieri and J. Lagarias, "Complements to Li's criterion for the Riemann hypothesis," *J. Number Theory* 77 (1999).
+- B. Rodgers and T. Tao, "The de Bruijn–Newman constant is non-negative," *Forum Math. Pi* 8 (2020).
