@@ -1,0 +1,87 @@
+# Li's criterion: what a positivity check can and cannot show
+
+## Summary
+
+Li's criterion says RH is equivalent to λ_n ≥ 0 for every n ≥ 1, where λ_n = Σ_ρ [1 − (1 − 1/ρ)^n] over the non-trivial zeros. It is the cleanest place where an arithmetic quantity (derivatives of log ξ at s = 1, i.e. Stieltjes-type constants) meets the zeros. I computed the λ_n both ways and asked how much a finite positivity check can tell us.
+
+1. **The arithmetic side and the zero side agree to 2e-10 (relative) for every n ≤ 800.** The arithmetic side uses Taylor coefficients of log ξ at s = 1 (a Cauchy integral, 150-digit arithmetic); the zero side uses Odlyzko's 2,001,052 published zeros plus a smooth-density tail. The known values come out: λ₁ = 0.0230957089661, λ₂ = 0.092345735228.
+2. **Positivity holds, with a large margin.** λ_n > 0 for all n ≤ 800 (the smallest is λ₁ = 0.0231), and λ_n follows (n/2)(ln n + γ − 1 − ln 2π) to within 0.3% at n = 800. If every zero is on the line then λ_n = Σ 4 sin²(nθ_γ/2) ≥ 0 term by term, so the margin carries no information beyond the line itself.
+3. **An off-line zero would show up only at astronomically large n.** For a hypothetical quartet 1/2 ± δ ± iγ₀, λ_n first turns negative at n* ≈ (γ₀² + ¼)/δ · ln((λ_n + 4)/2). Exact scans confirm this to within 1% in every case I could check.
+4. **So a finite Li-type check is computationally empty.** To exclude an off-line zero at the height up to which RH is verified (3×10¹²) one would need n ≈ 10²⁶. The coefficients up to n = 800 exclude only off-line zeros with γ₀ < 6.8 (for δ = 0.4), below the first zero.
+
+This agrees with the discussion at the end of the previous report: the numerics make the missing input vivid and quantify the cost of its absence; they do not supply it.
+
+## 1. Method
+
+**Arithmetic side.** Since Σ_ρ ln[(1 − (1 − 1/ρ)z)/(1 − z)] = ln ξ(1/(1 − z)) − ln ξ(1), we have λ_n/n = [zⁿ] ln ξ(1/(1 − z)). Writing ln ξ(1 + u) = ln ξ(1) + Σ a_k u^k gives λ_n = n Σ_{k=1}^{n} C(n−1, k−1) a_k. I obtained the a_k from a Cauchy integral of ln ξ on |u| = 13 (the nearest zero of ξ(1+u) is at distance 14.14), with 4096 points and 150 digits, unwrapping the phase continuously. A second run with a different radius, point count and precision (12.5, 3072, 160 digits) agrees with the first to every digit I compared (60 digits).
+
+**Zero side.** For ρ = 1/2 + iγ, |1 − 1/ρ| = 1 and the argument is θ_γ = 2 arctan(1/2γ), so each conjugate pair contributes 4 sin²(nθ_γ/2). I summed over the published zeros (γ ≤ 1,132,490.66) and added the tail ∫ 4 sin²(nθ(γ)/2) · ln(γ/2π)/(2π) dγ over the smooth density, up to γ = 10¹⁵ (plus an analytic remainder). For n ≤ 800 the tail is at most 1.2 (at n = 800) against λ₈₀₀ ≈ 1764.
+
+## 2. Results
+
+- **Duality check:** maximum relative difference between the two computations over n ≤ 800 is 1.8e-10. The differences grow like n² (as the tail estimate would), so I read them as the limit of the smooth-tail approximation, not as a discrepancy.
+- **Sensitivity of that check:** a single extra zero pair at height γ₀ would change λ_n by about n²/γ₀², so the agreement also shows (roughly) that the published list has no missing or extra zeros below about 10⁶.
+
+**Detection depth.** Adding a quartet 1/2 ± δ ± iγ₀ to the true zeros changes λ_n by Δ_n = Σ [1 − (1 − 1/ρ_i)^n]. One zero of the quartet has |1 − 1/ρ| = 1 + ε with ε ≈ δ/(γ₀² + ¼), so its contribution grows like (1 + ε)^n and eventually beats the (n/2) ln n growth of the rest. The smallest n at which λ_n + Δ_n < 0:
+
+| γ₀ | δ | exact n* | estimate |
+|---|---|---|---|
+| 14.135 | 0.4 | 4,442 | 4,414 |
+| 14.135 | 0.1 | 21,321 | 21,244 |
+| 14.135 | 0.01 | 268,943 | 268,899 |
+| 50.000 | 0.4 | 75,395 | 75,236 |
+| 100.000 | 0.4 | 343,055 | 342,720 |
+| 100.000 | 0.1 | 1,534,362 | 1,534,103 |
+| 1000.000 | 0.4 | 47,569,961 | 47,567,088 |
+
+Estimates for other heights (n*):
+
+| γ₀ | δ = 0.4 | δ = 0.1 | δ = 0.01 | δ = 0.001 |
+|---|---|---|---|---|
+| 14.1 | 4.41e+03 | 2.12e+04 | 2.69e+05 | 3.23e+06 |
+| 100 | 3.43e+05 | 1.53e+06 | 1.80e+07 | 2.06e+08 |
+| 1e+03 | 4.76e+07 | 2.06e+08 | 2.31e+09 | 2.57e+10 |
+| 1e+04 | 6.04e+09 | 2.57e+10 | 2.82e+11 | 3.06e+12 |
+| 1e+06 | 8.52e+13 | 3.56e+14 | 3.80e+15 | 4.04e+16 |
+| 1e+09 | 1.22e+20 | 5.01e+20 | 5.25e+21 | 5.49e+22 |
+| 1e+12 | 1.57e+26 | 6.44e+26 | 6.68e+27 | 6.92e+28 |
+
+The largest γ₀ that λ₁ … λ_N can exclude:
+
+| N | δ = 0.4 | δ = 0.1 | δ = 0.01 |
+|---|---|---|---|
+| 8e+02 | 6.84 | 3.4 | 0.964 |
+| 1e+04 | 20.2 | 10.1 | 3.16 |
+| 1e+06 | 164 | 82 | 25.9 |
+| 1e+09 | 4.24e+03 | 2.12e+03 | 670 |
+
+The reach grows only like the square root of N. For comparison, the first zero is at 14.13 and RH is verified to 3×10¹².
+
+![Li coefficients and the detection depth](rh_li_criterion.png)
+
+## 3. What this says about the missing input
+
+- A violation of RH, if it exists, is invisible to any finite part of the Li sequence we could compute for heights where RH is already known. The criterion is an infinite family of positivity conditions; its content lies in "for all n", not in any computed value.
+- As I recall, Bombieri and Lagarias showed that Li's criterion is a particular case of Weil's positivity criterion (the explicit-formula functional is non-negative on test functions g∗g̃). I did not recompute that and have not checked the statement. If it is right, the same conclusion applies to any finite family of test functions.
+- In function fields the corresponding positivity comes from geometry (it is what makes Weil's theorem a theorem). For ζ no analogue is known, and nothing computed here substitutes for one.
+
+## 4. Limitations
+
+- For n > 800 the "true" λ_n in the detection analysis is the asymptotic formula (about 0.3% off at n = 800), and for n ≤ 800 the exact arithmetic value; n* depends on this only logarithmically.
+- The detection analysis adds one quartet to the true zeros; it ignores any other hypothetical zeros, and the estimate formula is first order in δ/γ₀² (verified by exact scans up to γ₀ = 1000).
+- I did not compute the Weil functional for other test functions.
+- Nothing here bears on whether RH is true.
+
+## 5. Possible next steps
+
+- Compute the Weil functional for other families of test functions (for example Gaussians of varying width) and look at where positivity is tight.
+- Compute the Nyman–Beurling/Báez-Duarte distances, a different arithmetic criterion, and see how their convergence rates compare.
+
+## Files
+
+`li_arith.py` (arithmetic side), `li_zeros.py` (zero side), `li_fake.py` (detection depth), `build_li.py`, `write_li_readme.py`; results `li_arith_800.json`, `li_arith_800b.json`, `li_zeros.json`, `li_fake.json`; figure `rh_li_criterion.png`. They use `odlyzko/zeros6`.
+
+```bash
+python li_arith.py 800 4096 13.0 150 li_arith_800.json    # about 2.5 minutes
+python li_zeros.py && python li_fake.py && python build_li.py
+```
