@@ -1,0 +1,988 @@
+# Riemann Hypothesis: From the "Narrow Steep Cone" to Rigorous Equivalents
+
+> **Status:** Exploratory notes with numerical experiments, not a proof. Every rigorous criterion below is *equivalent* to the Riemann Hypothesis (RH), so the hard step is moved, not removed. Computations were done with mpmath and numpy and have not been independently audited. Literature statements come from sources found in November 2026; I read the abstracts and, for Lamzouri's paper, the full text, but did not check any proofs myself.
+
+---
+
+## Summary
+
+**Bottom line.** The submitted "narrow steep cone" statement is not a valid argument: its key hypothesis assumes the conclusion. Rewriting it rigorously gives statements that are exactly equivalent to RH. Numerical checks are consistent with RH but cannot prove it, and the strongest recent theorems still leave room for a sparse set of off-line zeros.
+
+| Question | Answer |
+|---|---|
+| Is the original claim a proof? | No. $E(\sigma)$ is never defined from $\zeta$, "endomorphism" is undefined, and $\operatorname{Re}\zeta(\rho)=0$ is trivial (Section 1). |
+| What does the "cone" become? | $\operatorname{Re}\,\xi'/\xi>0$ for $\sigma>\tfrac12$, i.e. $\lvert\xi\rvert$ increases away from the line. The steepness is a pole at each zero ($\approx1/\delta$), not a linear cone, and the slope is exactly $0$ at $\sigma=\tfrac12$ between zeros (Section 4). |
+| Rigorous equivalents tried | Li's criterion ($\lambda_n\ge0$ for all $n$, Section 3) and monotonicity of $\lvert\xi\rvert$ (Section 4). Both are equivalent to RH. |
+| Do our numerics contradict RH? | No. $\lambda_n>0$ for $n\le150$ (exact); a direct $\zeta$ scan found no negative slope for $t\in[0.05,300]$ at five values of $\sigma$ and for $t\in[300,2000]$ at $\sigma=0.51$ (Sections 7, 11). |
+| How strong is that evidence? | Weak. A planted off-line zero at height $\gamma$ would only show in Li's test at $n\sim\gamma^2$, and the monotonicity scan needs about $20\gamma$ evaluations of $\zeta$ (Section 8). Platt–Trudgian's verification up to $3\times10^{12}$ is far stronger. |
+| What is proven today? | More than $67.25\%$ of zeros are simple and on the line (2026 preprints, Section 9); all zeros up to height $3\times10^{12}$ are on the line; zero-free regions only near $\sigma=1$. |
+| Is the arithmetic really needed? | Yes. The Davenport–Heilbronn function has the same functional equation but no Euler product, and the same monotonicity scan finds five off-line zeros below $t=300$ (Section 12). $\zeta$ shows none. |
+| Do primes and zeros really determine each other? | Yes through the explicit formula. Zeros reconstruct $\psi(x)$ to $0.1\%$ of its fluctuation; for the Davenport–Heilbronn function the off-line zeros are needed, and its prime-side sum grows like $x^{0.7}$–$x^{0.8}$ rather than $\sqrt x$ (Section 13). |
+| Can primes alone certify a failure? | Yes in the test case. Weil's quadratic form built only from $b(n)/\sqrt n$ and archimedean terms is indefinite near each off-line zero of the Davenport–Heilbronn function (domination ratio up to $1.48$), and is positive semidefinite for $\zeta$ in every window tried (Section 14). |
+| Does positivity of the Weil form for $\zeta$ have a visible margin? | No. At 130 digits the smallest eigenvalue shrinks like $10^{-5},10^{-16},\dots,10^{-73}$ for $m=2,\dots,12$ and stays nonnegative to working precision, while the Davenport–Heilbronn violation stays near $-0.07$ (Section 14.5). |
+| Is there a self-adjoint operator equivalent to the slope condition? | Yes, several: the Pick matrices of $N=-\Xi'/\Xi$, the multiplication operator in the de Branges space of $E=\Xi+i\Xi'$ (spectra = zeros of $\Xi\sin\theta+\Xi'\cos\theta$), and the associated canonical system. Positivity of each is RH itself. Numerically the Pick matrices are positive semidefinite for $\zeta$ and negative in exactly the Davenport–Heilbronn windows with off-line zeros, one negative eigenvalue per zero (Section 15). |
+| Does Li's test on Davenport–Heilbronn see its off-line zeros? | Only at very large $n$. All $\lambda_n>0$ for $n\le150$ (exact), the 15 off-line zeros shift them by $\sim3\times10^{-7}$ relative, and the first negative $\lambda_n$ is estimated near $n\approx3.3\times10^5$ (Section 16). |
+| Can primes alone detect an off-line zero, and how many? | Yes. With primes up to $e^{2a}$ the Weil functional on a probe $(r-T)^2\times$bump is exact; all 14 Davenport–Heilbronn off-line zeros (offsets $0.07$–$0.37$) are detected with $a\le4$, and a planted zero in $\zeta$ needs a cutoff growing roughly like $T^{1}$ (Section 17). |
+| Does the prime-side matrix factor over primes? | Not in the form tried. It factors over zeros ($A=V^\dagger V$, to $10^{-12}$); its inertia counts the zeros, with one negative direction per off-line zero; partial prime sums are not positive ($\lambda_{\min}<0$ for $88\%$ of them) and a prime-indexed Gram fit has relative residual $0.89$ (Section 17.7). |
+| Can that method reach RH? | No. Pair correlation is blind to sparse sets and to zeros within about $1/\log T$ of the line (Section 10). The certified fraction at $T=3\times10^5$ is $0.818$; a density-corrected model puts it within $0.01$ of $0.6725$ only around $T\sim10^{90}$ (Section 10.5). The finite inequality it rests on held in 80,000 random and 4,000 adversarial tests (Section 10.4). |
+
+**Corrections made along the way.** An earlier draft of Section 10 used the Fejér kernel and attributed the constant $4/3$ to it; that was wrong, and the section now uses the Montgomery–Taylor kernel the theorem requires.
+
+**Where things are.** Sections 1–6 give the claim and its rigorous replacements. Sections 7–8 are small-scale numerics and the planted-zero stress test. Section 9 surveys the literature. Sections 10–11 run the pair-correlation certificate, the Li test and the monotonicity scan at larger height. Section 12 tests the role of the Euler product on the Davenport–Heilbronn function. Section 13 runs the explicit formula on both functions. Section 14 tests the Weil quadratic form from the prime side. Section 15 builds self-adjoint operators equivalent to the slope condition (Pick matrices, de Branges space, canonical system). Section 16 runs Li's test on the Davenport–Heilbronn function. Section 17 builds the Weil functional from primes only and measures the prime cutoff needed to detect an off-line zero. Section 18 lists open next steps.
+
+**Provenance note.** The 2026 result in Section 9 was produced by an internal Claude model and checked by Anthropic mathematicians, per the sources cited there. Lamzouri's independent proof is the other source of those bounds.
+
+---
+
+## 1. Original Claim (as submitted)
+
+$$\left( \zeta \in \operatorname{End}(\Omega) \land \zeta(s) = \overline{\zeta(1 - \overline{s})} \land \forall \rho \in \mathcal{Z}(\zeta),\ \operatorname{Re}(\zeta(\rho)) = 0 \land E(\sigma) = \alpha \left| \sigma - \tfrac{1}{2} \right|,\ \alpha \gg 1 \right) \implies \forall \rho \in \mathcal{Z}(\zeta),\ \operatorname{Re}(\rho) = \tfrac{1}{2}$$
+
+**Problems identified**
+
+- $E(\sigma)$ is never defined in terms of $\zeta$, so the cone hypothesis effectively assumes the conclusion.
+- "Endomorphism" is undefined: no structure is specified.
+- The reflection condition is not the standard functional equation.
+- $\operatorname{Re}\zeta(\rho)=0$ is trivially true at zeros, since $\zeta(\rho)=0$.
+- "$\alpha\gg1$" is not a precise quantity.
+
+## 2. Corrected Setup
+
+The completed zeta function is entire:
+
+$$\xi(s)=\tfrac12\, s(s-1)\,\pi^{-s/2}\,\Gamma\!\left(\tfrac{s}{2}\right)\zeta(s)$$
+
+- Functional equation: $\xi(s)=\xi(1-s)$
+- Real symmetry: $\xi(s)=\overline{\xi(\bar s)}$
+- Zeros of $\xi$ are exactly the nontrivial zeros of $\zeta$, denoted $\mathcal{Z}(\xi)$, symmetric about the real axis and the line $\operatorname{Re}(s)=\tfrac12$.
+
+## 3. Criterion A: Li's Criterion
+
+**Li coefficients** (sum over nontrivial zeros in conjugate pairs):
+
+$$\lambda_n=\sum_{\rho}\left[1-\left(1-\frac{1}{\rho}\right)^{n}\right]=\frac{1}{(n-1)!}\,\frac{d^{n}}{ds^{n}}\Big[s^{\,n-1}\log\xi(s)\Big]_{s=1}$$
+
+**Statement** (Li 1997; Bombieri–Lagarias 1999):
+
+$$\Big(\forall n\ge 1:\ \lambda_n\ge 0\Big)\iff \forall\rho\in\mathcal{Z}(\xi):\ \operatorname{Re}(\rho)=\tfrac12$$
+
+**Why it works.** Under $w=1-1/\rho$,
+
+$$|w|=\frac{|\rho-1|}{|\rho|}=1\iff \operatorname{Re}(\rho)=\tfrac12$$
+
+so the critical line maps to the unit circle.
+
+- If RH holds, every $|w|=1$ and each $\lambda_n>0$.
+- If a zero is off the line, its partner gives $|w|>1$. That term grows exponentially in $n$ and rotates in phase, forcing $\lambda_n<0$ for some $n$.
+
+**Known results**
+
+- $\lambda_1 = 1+\tfrac{\gamma}{2}-\tfrac12\log 4\pi \approx 0.0231>0$
+- $\lambda_n>0$ verified numerically for a large range of $n$.
+- Under RH: $\lambda_n \sim \tfrac{n}{2}\left(\log n - 1 + \gamma - \log 2\pi\right)$.
+- Proving $\lambda_n\ge0$ for all $n$ unconditionally is equivalent to RH.
+
+## 4. Criterion B: Monotonicity of $|\xi|$ (the rigorous "cone")
+
+Fix a height $t$ and set $E_t(\sigma)=\log|\xi(\sigma+it)|$.
+
+### 4.1 What the cone idea becomes
+
+- By $\xi(s)=\xi(1-s)$ and real symmetry, $E_t(\sigma)$ is **even** about $\sigma=\tfrac12$. A cone with vertex at $\tfrac12$ is therefore the natural picture.
+- Between zeros, $E_t$ is **smooth** at $\tfrac12$ with slope exactly $0$. So the subdifferential form $[-\alpha,\alpha]\subseteq\partial E(\tfrac12)$ is **false** there. Numerically, the slope at $\sigma=\tfrac12$ is about $10^{-22}$ for $t=5,10,20,30$.
+- The steepness appears only **at zeros**, and it is a pole, not a linear cone.
+
+### 4.2 Slope as a sum over zeros
+
+$$\frac{\partial}{\partial\sigma}\log|\xi(\sigma+it)|=\operatorname{Re}\frac{\xi'}{\xi}(s)=\sum_{\rho}\operatorname{Re}\frac{1}{s-\rho}$$
+
+A zero $\rho=\tfrac12+i\gamma$ on the line contributes
+
+$$\operatorname{Re}\frac{1}{s-\rho}=\frac{\sigma-\tfrac12}{|s-\rho|^2}$$
+
+which is $\approx 1/\delta$ at distance $\delta=\sigma-\tfrac12$ when $t=\gamma$. The "$\alpha\gg1$" of the original cone is really a logarithmic spike of unbounded steepness at each zero.
+
+**Numerical check near the first zero** ($\gamma\approx14.1347$, $t=\gamma$):
+
+| $\delta$ | $\operatorname{Re}\,\xi'/\xi$ | $1/\delta$ |
+|---|---|---|
+| 0.10 | 10.0068 | 10 |
+| 0.05 | 20.0034 | 20 |
+| 0.01 | 100.0007 | 100 |
+
+### 4.3 The criterion
+
+$$\textbf{RH}\iff \operatorname{Re}\frac{\xi'}{\xi}(\sigma+it)>0\quad\text{for all }\sigma>\tfrac12,\ t\in\mathbb{R}$$
+
+Equivalently, $|\xi(\sigma+it)|$ is strictly increasing in $\sigma$ for $\sigma>\tfrac12$ at every fixed $t$.
+
+- **(⇒)** Under RH every zero contributes a positive term for $\sigma>\tfrac12$.
+- **(⇐)** A zero off the line at $\beta>\tfrac12$ puts a pole of $\operatorname{Re}\frac{1}{s-\rho}$ there, so the slope goes negative on one side of it.
+
+**Numerical scan** ($t\in[0.1,60]$, 1200 points), minimum of $\operatorname{Re}\,\xi'/\xi$:
+
+| $\sigma$ | Minimum | Attained at |
+|---|---|---|
+| 0.51 | 0.0005 | $t=0.1$ |
+| 0.55 | 0.0023 | $t=0.1$ |
+| 0.60 | 0.0046 | $t=0.1$ |
+| 0.75 | 0.0116 | $t=0.1$ |
+
+The slope stays positive throughout, consistent with RH on this range. This is not a proof, since the criterion must hold for all $t$.
+
+### 4.4 What does not help
+
+- **Subharmonicity:** $\log|\xi|$ is subharmonic everywhere, with or without off-line zeros, so it carries no location information.
+- **Pointwise convexity in $\sigma$:** $\partial_\sigma^2\log|\xi|=-\partial_t^2\log|\xi|$ has no fixed sign.
+
+## 5. Mapping the Original Idea to Rigorous Statements
+
+| Original idea | Rigorous counterpart |
+|---|---|
+| "Endomorphism" structure | $\xi$ entire |
+| Reflection axis $\sigma=\tfrac12$ | $\xi(s)=\xi(1-s)$ |
+| $\operatorname{Re}\zeta(\rho)=0$ | Dropped (trivial) |
+| Narrow steep cone, $\alpha\gg1$ | $\operatorname{Re}\,\xi'/\xi>0$ for $\sigma>\tfrac12$ (unbounded steepness near zeros) |
+| Subdifferential $[-\alpha,\alpha]$ | False between zeros; slope is $0$ at $\sigma=\tfrac12$ |
+| Implication to $\operatorname{Re}\rho=\tfrac12$ | Equivalent to RH, not a derivation of it |
+
+## 6. Other Equivalent Forms
+
+- Robin's inequality for the divisor function.
+- de Bruijn–Newman constant: $\Lambda\ge0$ is proven (Rodgers–Tao); $\Lambda\le0$ is equivalent to RH.
+
+## 7. Small-Scale Numerical Checks
+
+![Numerics](rh_numerics.png)
+
+**Monotonicity scan.** $t\in[0.05,300]$ in steps of $0.05$, at $\sigma\in\{0.501,0.51,0.55,0.6,0.75\}$. $\operatorname{Re}\,\xi'/\xi$ was positive at every point (0 non-positive values). The minimum of $\operatorname{Re}\,\xi'/\xi\,/\,(\sigma-\tfrac12)$ is about $0.046$, attained as $t\to0$, and is the same for every $\sigma$ tested. Spikes of size $\sim 1/\delta$ occur at the zeros.
+
+**Li coefficients.** Computed from the Taylor series of $\log\xi$ at $s=1$ (via a 512-point contour on $|s-1|=10$, 80-digit arithmetic), using $\lambda_n=n\sum_{k=1}^{n}\binom{n-1}{k-1}c_k$ where $\log\xi(1+u)=\sum c_k u^k$.
+
+| $n$ | $\lambda_n$ | RH asymptotic |
+|---|---|---|
+| 1 | 0.02310 | −1.130 |
+| 2 | 0.09235 | −1.568 |
+| 5 | 0.5755 | −1.628 |
+| 10 | 2.2793 | 0.210 |
+| 20 | 8.7693 | 7.351 |
+| 50 | 43.531 | 41.284 |
+| 100 | 118.60 | 117.23 |
+| 150 | 207.68 | 206.25 |
+
+All $\lambda_n$ for $1\le n\le150$ are positive, $\lambda_1$ matches the closed form, and the gap to the asymptotic shrinks in relative terms. This is consistent with RH but proves nothing, since the criterion needs all $n$.
+
+## 8. Stress Test: Planting a Fake Off-Line Zero
+
+To see what the two criteria can actually detect, I added a hypothetical zero quadruple $\beta\pm i\gamma,\ 1-\beta\pm i\gamma$ (as required by the symmetries) to the real zero set and asked when each test would notice.
+
+![Planted zero](rh_planted_zero.png)
+
+**Li test.** The planted zero $1-\beta+i\gamma$ maps to $w$ with $|w|>1$, and its contribution grows like $|w|^n$. The coefficient $\lambda_n$ first goes negative when this growth overtakes the $\tfrac n2\log n$ baseline. Baseline: exact $\lambda_n$ for $n\le150$, the RH asymptotic beyond. The two removed on-line pairs at $\gamma\pm1$ are subtracted.
+
+| $\gamma$ | $\beta=0.55$ | $\beta=0.6$ | $\beta=0.75$ |
+|---|---|---|---|
+| 14.2 | $4.65\times10^{4}$ | $2.15\times10^{4}$ | $7.7\times10^{3}$ |
+| 100 | $3.2\times10^{6}$ | $1.5\times10^{6}$ | $5.7\times10^{5}$ |
+| 1,000 | $4.3\times10^{8}$ | $2.1\times10^{8}$ | $7.8\times10^{7}$ |
+| 10,000 | $5.3\times10^{10}$ | $2.6\times10^{10}$ | $9.9\times10^{9}$ |
+| 100,000 | $\approx6\times10^{12}$ | $\approx3\times10^{12}$ | $\approx1.2\times10^{12}$ |
+
+(First negative $n$; the last row is the amplitude-crossing estimate $n^*$, not brute-forced. Runs were checked by brute-force scan for $\gamma\le10^4$.)
+
+The required $n$ scales roughly like $\gamma^2/(2\beta-1)$ times a logarithm. Even a zero as low as $\gamma=14.2$ off the line by only $0.05$ would not be seen until $n\approx4.6\times10^4$, far beyond the $n\le150$ checked above.
+
+**Monotonicity test.** With the quadruple at $\gamma=100$, $\beta=0.6$, the slope $\operatorname{Re}\,\xi'/\xi$ at $\sigma=0.55$ goes negative only for $t\in[99.916,\,100.084]$, a window about $0.17$ wide. At $\beta=0.75$, $\sigma=0.6$ the window is about $0.41$ wide. So the scan needs a step of roughly $0.05$ or finer and must reach $t\approx\gamma$, i.e. about $20\gamma$ evaluations of $\zeta$.
+
+**What this shows**
+
+- Both tests do detect a planted zero, so they are not vacuous.
+- The monotonicity test is much cheaper per height: it needs only a scan up to $\gamma$, whereas Li's test needs $n\sim\gamma^2$.
+- The small-scale checks ($t\le300$, $n\le150$) rule out an off-line zero with $\gamma\lesssim300$ via the scan and say nothing about higher zeros (Section 11 extends the scan to $t\le2000$). The known verification that the first $\sim10^{13}$ zeros lie on the line is far stronger than anything run here.
+- Finite checks can never prove RH. They can only push the lowest possible counterexample higher.
+
+## 9. State of the Evidence (searched November 2026)
+
+### 9.1 Proportion of zeros proven to lie on the critical line
+
+| Year | Result | Proportion on the line |
+|---|---|---|
+| 1914 | Hardy | Infinitely many |
+| 1942 | Selberg | A positive proportion |
+| 1974 | Levinson | > 1/3 |
+| 1989 | Conrey | > 2/5 (about 40.8%) |
+| 2011-12 | Bui–Conrey–Young; Feng | > 41%; > 41.28% |
+| 2019-20 | Pratt–Robles–Zaharescu–Zeindler | > 5/12 (about 41.7%) |
+| **Aug 2026** | **Alpöge–Furman (argument produced by an internal Claude model)** | **More than 2/3 simple and on the line; Lamzouri states the Claude proof and his own reach the same constant, 0.6725** |
+
+- The 2026 result is on arXiv (2608.13637), with a companion Lean 4 formalization released by Anthropic. The Breakthrough Tracker lists it as a Lean-verified preprint, **not yet peer reviewed** (as of its August 2026 entry).
+- Lamzouri (arXiv 2609.02882, September 2026) gives a different, shorter proof of the same bounds (> 67.25% simple and on the line, > 83.62% distinct) and two new ones: > 88.76% of zeros are simple or on the line, and the average of the simple and on-the-line proportions is > 83.62%. His argument replaces the matrix framework of the Claude proof by a single Hilbert-space inequality (Prop. 2.1), applied with the unconditional pair-correlation theorem of Baluyot–Goldston–Suriajaya–Turnage-Butterbaugh. Axiom Math's AxiomProver produced Lean certificates for Prop. 2.1 unconditionally and for the main theorem conditional on that pair-correlation lemma and the Riemann–von Mangoldt asymptotic.
+- The paper notes that under RH the same method had reached 0.6725 (Montgomery–Taylor) and 0.6792 (Chirre–Gonçalves–de Laat); the new result removes RH from the 0.6725 bound.
+- The method uses pair correlation (Montgomery–Taylor constant $C_0=\tfrac32-\tfrac1{\sqrt2}\cot\tfrac1{\sqrt2}\approx0.6725$) and an explicit-formula second moment. It is insensitive to $o(N)$ off-line zeros, so it **cannot** rule out a sparse set of exceptions.
+- It does **not** prove RH. About 32.7% of zeros are still not shown to be on the line.
+
+### 9.2 Computation
+
+- Platt–Trudgian (2021): all $12{,}363{,}153{,}437{,}138$ zeros with height up to $3{,}000{,}175{,}332{,}800$ lie on the critical line and are simple.
+- This is the range in which Section 8 shows only a violation at huge height or huge $n$ could hide. Nothing in our small-scale checks competes with it.
+
+### 9.3 Zero-free regions and zero density
+
+- **Classical region:** no zeros for $\sigma \ge 1-\dfrac{1}{5.558691\log|t|}$, $|t|\ge2$ (Mossinghoff–Trudgian–Yang, 2024).
+- **Vinogradov–Korobov region:** no zeros for $\sigma\ge1-\dfrac{c}{(\log t)^{2/3}(\log\log t)^{1/3}}$; Ford's explicit constant is about 57.54.
+- **Zero density:** a recent exponent $30/13$ in $N(\sigma,T)\ll T^{b(1-\sigma)}$ appears in the literature I found (attributed to Guth–Maynard, 2024, from memory; the source I read did not name the authors). Such estimates bound how many zeros can sit away from the line, not whether any do.
+- Zero-free regions only exclude zeros near $\sigma=1$ (and, by symmetry, near $\sigma=0$). Zero-density estimates thin out the rest, but nothing excludes zeros between those regions and the critical line.
+
+### 9.4 How this fits our two criteria
+
+- **Li's criterion** is global: it needs $\lambda_n\ge0$ for all $n$. The proportion results give no direct handle on $\lambda_n$.
+- **Monotonicity** ($\operatorname{Re}\,\xi'/\xi>0$ for $\sigma>\tfrac12$) holds for $\sigma\ge1$, since every zero has $\beta<1$ and so each term $\operatorname{Re}\frac{1}{s-\rho}$ is positive there. The open part is $\tfrac12<\sigma<1$, where the zero-free regions leave room.
+- A positive-proportion theorem and a "no zeros off the line" theorem are different in kind. The first can be approached by averaging (moments, pair correlation); RH needs control of every single zero.
+
+## 10. Testing the Pair-Correlation Certificate
+
+The 2026 results rest on an inequality (Lamzouri, Prop. 2.1). For a finite multiset $\mathcal Z$ invariant under complex conjugation, and $K=\widehat{\eta^{2}}$ with $\eta$ even and compactly supported,
+
+$$\#\{\text{simple real elements}\}\ \ge\ 2|\mathcal Z|-\sum_{z,s\in\mathcal Z}K(z-s)^2 .$$
+
+For zeta, $z_\rho=i(\rho-\tfrac12)\tfrac{\log T}{2\pi}$ is real exactly when $\operatorname{Re}\rho=\tfrac12$. The theorem needs $f=\eta^2$ supported in $[-\tfrac12,\tfrac12]$, so that $f*f$ lies in $[-1,1]$, where the unconditional pair-correlation formula applies. I use the Montgomery–Taylor kernel
+
+$$f_0(x)=\frac{\cos(\sqrt2\,x)}{\sqrt2\,\sin(1/\sqrt2)}\ \ (|x|\le\tfrac12),\qquad K=\widehat{f_0},$$
+
+whose asymptotic constant is $C_{\rm MT}=\tfrac12+\tfrac1{\sqrt2}\cot\tfrac1{\sqrt2}\approx1.3275$, giving a certified fraction $2-C_{\rm MT}\approx0.6725$. (Lamzouri multiplies $f_0$ by a smooth cutoff near $\pm\tfrac12$ so that the theorem applies; Sections 10.1–10.3 use $f_0$ unsmoothed, with pair sums truncated at $|z-s|\le200$, which changes them by roughly $10^{-3}$ relatively. Section 10.4 repeats the large-height computation with his smoothed kernel.)
+
+> **Correction.** An earlier draft of this section used the Fejér kernel $K=\operatorname{sinc}^2$ and described it as giving Montgomery's constant $4/3$. That was wrong: that $K$ comes from a $\lambda=1$ window outside the range of the unconditional formula, and the quantity summed is $K^2$, not $K$. The inequality itself holds for any such kernel, so the sanity check was still valid, but the numbers below replace the earlier ones.
+
+### 10.1 Planted off-line zeros (first 1000 zeros, $T\approx1419$)
+
+Two adjacent zeros are replaced by $\tfrac12\pm d+i\tilde\gamma$ at their midpoint, so $N$ is unchanged.
+
+![Pair correlation](rh_pair_correlation.png)
+
+| Moved off line | $d=0.001$ | $d=0.01$ | $d=0.1$ | $d=0.3$ | True simple-on-line |
+|---|---|---|---|---|---|
+| 0% (baseline) | 0.901 | 0.901 | 0.901 | 0.901 | 1.000 |
+| 1% | 0.892 | 0.891 | 0.890 | 0.866 | 0.990 |
+| 5% | 0.854 | 0.855 | 0.849 | 0.721 | 0.950 |
+| 10% | 0.810 | 0.810 | 0.800 | 0.543 | 0.900 |
+| 20% | 0.722 | 0.717 | 0.683 | 0.179 | 0.800 |
+| 30% | 0.627 | 0.629 | 0.579 | −0.186 | 0.700 |
+
+(Entries are the certified lower bound divided by $N$.)
+
+1. **The inequality held in all 24 configurations** (certified bound ≤ true count).
+2. **Near-line off-line zeros look like double zeros.** The symmetry puts $z$ and $\bar z$ at the same real position, separated vertically by $2d\log T/2\pi$. For $d\lesssim0.01$ that is about $0.02$, far below the kernel's resolution. The bound drops one-for-one with the true count, and $d=0.001$ is indistinguishable from $d=0.01$.
+3. **Far-off zeros are penalized.** At $d=0.3$, moving 30% of zeros pushes the bound below zero, and the penalty grows quickly with $d$. This is the mechanism behind the horizontal-distribution results (Baluyot–Goldston–Suriajaya–Turnage-Butterbaugh): most zeros must lie in a box of width about $1/\log T$ around the line, though not necessarily on it.
+
+### 10.2 The real zeros at larger height
+
+Zeros were found by sign changes of the Riemann–Siegel $Z$-function (first 1000 from mpmath). The method reproduced the first 971 zeros above $t=100$ with maximum error $0.002$, and the count up to $3\times10^5$ is $466{,}608$ against $466{,}659$ from the smoothed counting formula. The sum $\sum K(z-s)^2$ runs over all zeros with $0<\gamma\le T$, $z=\gamma\log T/2\pi$.
+
+| $T$ | $N$ | $\log T$ | $\sum K^2/N$ | Certified fraction $2-\sum K^2/N$ |
+|---|---|---|---|---|
+| $10^3$ | 649 | 6.91 | 1.0892 | 0.911 |
+| $3\times10^3$ | 2,469 | 8.01 | 1.1132 | 0.887 |
+| $10^4$ | 10,142 | 9.21 | 1.1352 | 0.865 |
+| $3\times10^4$ | 35,673 | 10.31 | 1.1532 | 0.847 |
+| $10^5$ | 138,059 | 11.51 | 1.1695 | 0.831 |
+| $3\times10^5$ | 466,608 | 12.61 | 1.1823 | 0.818 |
+
+**Reading the table**
+
+- The certified fraction falls steadily toward the theoretical $0.6725$, but only like $1/\log T$. At $T=3\times10^5$ it is still $0.818$.
+- Fitting $a+b/\log T$ and $a+b/\log T+c/\log^2T$ to these six points gives limits of $\sum K^2/N\approx1.293$ and $1.351$, which bracket $C_{\rm MT}=1.3275$. This agrees with theory, though it is only an extrapolation.
+- All $466{,}608$ zeros here are on the line, so these are baseline values for the true zeta. The bound is a theorem about the real zeros, not a measurement of them.
+
+### 10.3 Direct check of the finite inequality (Prop. 2.1)
+
+The proposition is a statement about any finite multiset $\mathcal Z$ invariant under complex conjugation, so it can be tested on arbitrary sets, not just zeta zeros. With $N=|\mathcal Z|$ (multiplicities counted), $\Sigma=\sum_{z,s}K(z-s)^2$ and $A=\Sigma/N$, I checked four of its inequalities:
+
+| Eq. | Statement |
+|---|---|
+| (2.4) | #simple real elements $\ \ge\ 2N-\Sigma$ |
+| (2.5) | #distinct elements $\ \ge\ \tfrac32N-\tfrac12\Sigma$ |
+| (2.6) | #simple elements + #real elements $\ \ge\ 3N-\Sigma$ |
+| (2.7) | if $1\le A<2$: #(real or simple) $\ \ge\ \dfrac{5+2\sqrt2-2A}{3+2\sqrt2}\,N$ |
+
+**Kernels** (each $K=\widehat f$ with $f=\eta^2\ge0$, $\int f=1$): Montgomery–Taylor, Fejér (triangle), indicator, and raised cosine $1+\cos2\pi x$. The inequality only needs $\eta\in L^2$ with compact support, so the support range needed for the asymptotic formula is irrelevant here.
+
+**Random sets.** 20,000 per kernel, 80,000 in total: 1 to 12 distinct points, real or conjugate pairs with imaginary part from $10^{-6}$ to $2.5$, multiplicities 1 to 3, and spacings from clustered to far apart. **Violations: 0.** ((2.7) applied to between 783 and 998 sets per kernel.)
+
+**Adversarial search.** 250 Nelder–Mead runs per kernel per inequality (4,000 in total) minimizing the normalized slack (left side minus right side, divided by $N$) over positions, real/complex structure and multiplicities. The lowest slack found was about $-4\times10^{-16}$, which is floating-point rounding. The optimizer reaches equality but never crosses it.
+
+**Tight cases** (Montgomery–Taylor kernel):
+
+| Set | Slack in (2.4) |
+|---|---|
+| One isolated simple real point | $0$ |
+| 10 far-apart simple real points | $5\times10^{-10}$ |
+| 5 far-apart *double* real points | $9\times10^{-10}$ |
+| Conjugate pair $x\pm 0.001i$ (no real elements) | $2.4\times10^{-5}$ |
+| Two simple reals $0.5$ apart | $0.87$ |
+
+So (2.4) is sharp in the isolated simple case and in the isolated double case ($2-m$ with $m=2$), and the near-real conjugate pair is almost tight, matching the earlier observation that a zero just off the line looks like a double zero.
+
+**Negative controls** (to confirm the harness can fail):
+
+- Dropping conjugation invariance, $\mathcal Z=\{0.2+0.4i\}$: (2.4) is violated (needs $0\ge1.00$).
+- A too-strong version with $\tfrac12\Sigma$ in place of $\Sigma$: violated in 2,917 of 3,000 random real sets.
+- A kernel with $K(0)=0.8$ instead of $1$: (2.4) violated in 2,600 of 3,000.
+
+**What this does and does not show.** It confirms that my implementation of the kernel and the sums matches the proposition on a wide range of inputs, including the edge cases, and that the hypotheses ($K(0)=1$, conjugation invariance) matter. It does not check the asymptotic formulas (Lemmas 3.1 and 3.2), which are the analytic heart of the argument; Section 10.2 only compares them against real zeros numerically. The paper states that sums over a multiset count multiplicity, which is how (2.7) was implemented.
+
+### 10.4 The smoothed kernel from the paper
+
+I read Lamzouri's construction (Lemma 3.2) and implemented it. Take a smooth even cutoff $\psi_\delta$ with $0\le\psi_\delta\le1$, $\psi_\delta=1$ for $|x|\le\tfrac12-\delta$ and support inside $(-\tfrac12,\tfrac12)$, and set
+
+$$f_\delta=\frac{\psi_\delta^2 f_0}{A_\delta},\qquad A_\delta=\int\psi_\delta^2f_0,\qquad K_\delta=\widehat{f_\delta},\qquad Q_\delta=f_\delta*f_\delta .$$
+
+The asymptotic constant is $C_\delta=Q_\delta(0)+2\int_0^1\alpha Q_\delta(\alpha)\,d\alpha$, and the certified fraction is $2-C_\delta$. My cutoff is $\psi_\delta(x)=S\!\left(\tfrac{1/2-|x|}{\delta}\right)$ with $S(t)=\dfrac{h(t)}{h(t)+h(1-t)}$, $h(t)=e^{-1/t}$ (the paper only requires some such function).
+
+| $\delta$ | $C_\delta$ | Limit $2-C_\delta$ | $T=10^3$ | $10^4$ | $10^5$ | $3\times10^5$ |
+|---|---|---|---|---|---|---|
+| 0 (unsmoothed $f_0$) | 1.3275 | 0.6725 | 0.911 | 0.865 | 0.831 | 0.818 |
+| 0.02 | 1.3421 | 0.6579 | 0.906 | 0.858 | 0.823 | 0.809 |
+| 0.05 | 1.3658 | 0.6342 | 0.899 | 0.848 | 0.810 | 0.796 |
+| 0.1 | 1.4102 | 0.5898 | 0.885 | 0.827 | 0.785 | 0.770 |
+
+- **Check on the numerics:** with $\delta=0$ the same code gives $C=1.32754$ against the closed form $C_{\rm MT}=1.32750$.
+- **$C_\delta\ge C_{\rm MT}$ and $C_\delta\to C_{\rm MT}$ as $\delta\to0$**, as the paper states (Remark 3.4, via Carneiro–Chandee–Littmann–Milinovich). So the smoothing can only lower the certified fraction, and the constant $0.6725$ is approached from below only as $\delta\to0$.
+- **The kernel is genuinely smooth:** $|K_\delta(\xi)|$ for $\xi>80$ is $5\times10^{-6}$ ($\delta=0.1$), $10^{-4}$ ($0.05$) and $1.3\times10^{-3}$ ($0.02$), against $\sim1/\xi$ decay for the unsmoothed kernel.
+- **Finite height again:** at every $\delta$, the certified fraction at $T=3\times10^5$ is still $0.13$–$0.18$ above its own limit.
+- **Inequality re-check:** Prop. 2.1 held for all three smoothed kernels on 1,500 random sets each (including complex points), with smallest slack about $10^{-13}$.
+
+### 10.5 Testing the pair-correlation behavior at finite height
+
+The theorem needs the sum $\sum K(z-s)^2$ to approach $C\cdot N$ as $T\to\infty$, with error $O(1/\sqrt{\log T})$. The measured ratios in Sections 10.2 and 10.4 are well below that limit, so I asked whether the gap is explained by the zeros being less dense than the asymptotic scaling assumes.
+
+**Model.** In the units $z=\gamma\log T/2\pi$, a zero at height $\gamma$ has local density $\rho(\gamma)=\log(\gamma/2\pi)/\log T<1$. Assuming locally GUE statistics (Montgomery's pair correlation, $1-\operatorname{sinc}^2\pi x$), each zero contributes
+
+$$1+\rho\int K(x)^2\bigl(1-\operatorname{sinc}^2(\pi\rho x)\bigr)\,dx,$$
+
+with the integral cut off at the ends of $(0,T]$ so that missing neighbors are excluded. For $\rho=1$ this equals $C$ exactly (checked by Plancherel). This is a model prediction, not part of the theorem.
+
+| Kernel | $T$ | Measured $\sum K^2/N$ | Model | Difference |
+|---|---|---|---|---|
+| Unsmoothed | $10^3$ | 1.0892 | 1.1226 | −0.033 |
+| | $10^4$ | 1.1352 | 1.1598 | −0.025 |
+| | $10^5$ | 1.1695 | 1.1862 | −0.017 |
+| | $3\times10^5$ | 1.1823 | 1.1962 | −0.014 |
+| $\delta=0.02$ | $10^3$ | 1.0938 | 1.1285 | −0.035 |
+| | $3\times10^5$ | 1.1909 | 1.2057 | −0.015 |
+| $\delta=0.1$ | $10^3$ | 1.1147 | 1.1544 | −0.040 |
+| | $3\times10^5$ | 1.2305 | 1.2474 | −0.017 |
+
+- The density effect alone accounts for most of the distance between the measured values and the limit $C=1.33$. At $T=3\times10^5$ the model is within about $1\%$ of the data.
+- A small residual remains, and it shrinks with $T$ (from $-0.033$ at $10^3$ to $-0.014$ at $3\times10^5$ for the unsmoothed kernel). I did not model its source.
+
+**Direct check of the pair correlation.** I unfolded the zeros in $(10^5,3\times10^5]$ (328,549 zeros) with the smooth counting function and histogrammed the spacings of all pairs. Observed pairs per zero against $1-\operatorname{sinc}^2\pi x$ integrated over each bin of width $0.1$:
+
+| Separation $x$ | Observed | GUE | Ratio |
+|---|---|---|---|
+| 0.15 | 0.0064 | 0.0074 | 0.86 |
+| 0.35 | 0.0304 | 0.0344 | 0.88 |
+| 0.55 | 0.0638 | 0.0672 | 0.95 |
+| 0.85 | 0.0989 | 0.0970 | 1.02 |
+| 1.85 | 0.1017 | 0.0994 | 1.02 |
+| 2.95 | 0.1001 | 0.1000 | 1.00 |
+
+The total over $x<3$ agrees to within $0.2\%$ (ratio $0.998$). At small separations there are about $12$–$14\%$ fewer close pairs than GUE predicts, with a slight excess at $x\approx1$–$2$; this is the sort of lower-order deviation that is expected at moderate height, but I did not derive its size.
+
+**How far away is the limit?** Using the same model for very large $T$ (end effects negligible, density weighted by $\log(\gamma/2\pi)$), the predicted certified fraction is:
+
+| $T$ | Unsmoothed ($\to0.6725$) | $\delta=0.02$ ($\to0.6579$) |
+|---|---|---|
+| $10^5$ | 0.814 | 0.805 |
+| $10^{10}$ | 0.751 | 0.739 |
+| $10^{20}$ | 0.714 | 0.700 |
+| $10^{50}$ | 0.690 | 0.675 |
+| $10^{100}$ | 0.682 | 0.667 |
+| $10^{300}$ | 0.676 | 0.661 |
+
+So the model puts the certified fraction within $0.01$ of its limit only around $T\sim10^{90}$. The theorem is a $\liminf$ statement and needs no such $T$, but this shows why no finite computation, including the ones here, can read off the constant $0.6725$. These extrapolations rely on the GUE model, which is stronger than what has been proved for general heights.
+
+### 10.6 Conclusion
+
+The pair-correlation method certifies a proportion by showing that off-line or multiple zeros cannot be too numerous, while staying blind to any single zero or any sparse set. That is why it cannot approach RH, which requires every zero to be on the line.
+
+## 11. Larger-Height Zeros Through the Li and Monotonicity Tests
+
+The zero set from Section 10.2 (all 466,608 zeros up to $T=3\times10^5$) was run through both earlier tests.
+
+### 11.1 Li coefficients from zeros
+
+With all zeros on the line, $\rho=\tfrac12\pm i\gamma$ and $w=1-1/\rho$ has $|w|=1$, so
+
+$$\lambda_n=\sum_{\gamma>0}2\bigl(1-\cos n\varphi_\gamma\bigr),\qquad \varphi_\gamma=2\arctan\tfrac1{2\gamma}.$$
+
+I summed over zeros up to $T$ and added the part beyond $T$ by integrating against the density $\tfrac1{2\pi}\log\tfrac{\gamma}{2\pi}$. Comparison with the exact $\lambda_n$ from the Taylor-series method (Section 7):
+
+| $T$ | Max relative error, $n\le150$, zeros only | With tail |
+|---|---|---|
+| $10^3$ | $1.0\times10^{-1}$ | $4.2\times10^{-5}$ |
+| $10^4$ | $1.4\times10^{-2}$ | $1.6\times10^{-6}$ |
+| $10^5$ | $1.8\times10^{-3}$ | $1.3\times10^{-6}$ |
+| $3\times10^5$ | $6.8\times10^{-4}$ | $1.3\times10^{-6}$ |
+
+Example, $n=100$: exact $118.6038$; zeros up to $3\times10^5$ give $118.5413$, and $118.6037$ with the tail.
+
+- The two independent computations of $\lambda_n$ agree to about $10^{-6}$ relative accuracy, which checks both the zero data and the Taylor-series values.
+- **Positivity is automatic here.** Each on-line zero contributes $2(1-\cos n\varphi)\ge0$, so truncated sums are positive by construction (checked for sampled $n\le3000$). The test can only detect a violation through a zero off the line, which for $\gamma$ at this height would need $n\sim\gamma^2$ (Section 8).
+- For $n\gtrsim1000$ the numerical tail integral gave convergence warnings; those values (e.g. $n=1000$: $2326$ vs asymptotic $2323.6$) are approximate.
+
+### 11.2 Monotonicity of $|\xi|$
+
+**Zero-sum formula.** For on-line zeros, $\operatorname{Re}\,\xi'/\xi(\sigma+it)=\sum_\gamma\dfrac{\delta}{\delta^2+(t-\gamma)^2}$ with $\delta=\sigma-\tfrac12$. It agrees with a direct evaluation of $\zeta$ at six sample points to about $10^{-3}$ (e.g. $\sigma=0.55$, $t=2000$: direct $0.617131$, zeros $0.616954$).
+
+**Why a zero-based scan proves nothing.** Every term is positive, so the sum is positive by construction. The only real test is a direct evaluation of $\zeta$, whose slope would turn negative near an off-line zero.
+
+**Direct scan.** $\sigma=0.51$, $t\in[300,2000]$, step $0.1$ (17,000 points; 1,394 zeros in this window), using $\zeta'/\zeta$ and $\Gamma'/\Gamma$ directly:
+
+| Quantity | Value |
+|---|---|
+| Points with slope $\le0$ | **0** |
+| Minimum slope | $0.0163$ at $t=308.6$ (ratio to $\delta$: $1.63$) |
+| Median slope | $0.136$ |
+| Maximum slope | $100.1$ (pole value $1/\delta=100$) |
+
+**Direct vs. on-line prediction.** Largest deviation $5.36$ at $t=1573.8$; rms $0.16$. The deviation depends on distance to the nearest zero:
+
+| Distance to nearest zero | Points | Max deviation |
+|---|---|---|
+| $<0.02$ | 539 | 5.36 |
+| $0.02$–$0.05$ | 840 | 1.83 |
+| $0.05$–$0.1$ | 1,378 | 0.165 |
+| $0.1$–$0.2$ | 2,737 | 0.023 |
+| $\ge0.2$ | 11,506 | 0.0037 |
+
+The large values sit within $0.05$ of a zero, where the pole width ($\delta=0.01$) is comparable to the $\sim0.002$ error in my Riemann–Siegel zero positions. Away from zeros the prediction holds to $4\times10^{-3}$. A planted off-line zero at $\beta=0.6$ would add a negative pole of size about $1/(0.6-\sigma)\approx11$ spread over a window of width several tenths, far larger than these deviations (Section 8), so none is present in $[300,2000]$ at this resolution.
+
+**Limits.** The scan covers $t\le2000$, a tiny part of the range already verified by Platt–Trudgian. The evaluation of $\zeta$ at much larger heights was too slow here.
+
+## 12. Does the Arithmetic Matter? The Davenport–Heilbronn Test
+
+**Claim tested.** Zeros of $\zeta$ stay on the line because of arithmetic (control of primes, the Euler product, the explicit formula), not because of the functional equation alone. Analytic structure and symmetry without an Euler product should not be enough.
+
+**Counterexample.** The Davenport–Heilbronn function is a combination of two Dirichlet $L$-functions for the odd character $\chi$ mod 5 with $\chi(2)=i$:
+
+$$f(s)=\tfrac12(1-i\kappa)\,L(s,\chi)+\tfrac12(1+i\kappa)\,L(s,\bar\chi),\qquad \kappa=\frac{\sqrt{10-2\sqrt5}-2}{\sqrt5-1}\approx0.2841 .$$
+
+It has a Dirichlet series and a functional equation of the same shape as $\zeta$, but no Euler product. With $\Lambda(s)=(5/\pi)^{(s+1)/2}\Gamma\!\left(\tfrac{s+1}2\right)f(s)$ I verified numerically at four points that $\Lambda(s)=\Lambda(1-s)$ (ratio $1$ to $10^{-20}$), and that $\Lambda$ is real on the critical line. So the monotonicity criterion applies in exactly the same form: $\operatorname{Re}\,\Lambda'/\Lambda>0$ for $\sigma>\tfrac12$ would put all zeros on the line.
+
+**Scan.** $\sigma=0.55$, $t\in[0.1,300]$, step $0.1$ (2,998 points), same method as Section 11.2.
+
+| Function | Points with slope $\le0$ |
+|---|---|
+| $\zeta$ ($\sigma=0.55$, $t\le300$) | 0 |
+| $\zeta$ ($\sigma=0.51$, $t\le2000$) | 0 |
+| **Davenport–Heilbronn** ($\sigma=0.55$, $t\le300$) | **20, in five windows** |
+
+Each window sits on a zero of $f$ found by root finding (all with $|f|\lesssim10^{-20}$, and each has the partner zero at $1-s$ by the functional equation):
+
+| Window ($t$) | Zero found | $\operatorname{Re}s-\tfrac12$ | Min slope in window |
+|---|---|---|---|
+| 85.5–85.9 | $0.80852+85.69935\,i$ | 0.309 | −1.04 |
+| 114.1–114.3 | $0.65083+114.16334\,i$ | 0.151 | −3.89 |
+| 166.5 | $0.57436+166.47931\,i$ | 0.074 | −15.96 |
+| 176.5–176.9 | $0.72426+176.70246\,i$ | 0.224 | −2.03 |
+| 240.2–240.7 | $0.86953+240.40467\,i$ | 0.370 | −0.67 |
+
+The first matches the known first off-line zero of this function ($\approx0.8085+85.6993\,i$).
+
+**What this shows**
+
+- **The test detects exactly what the pole model of Section 4.2 predicts.** Every negative-slope window is a zero with $\beta>0.55$, and the closer $\beta$ is to $\sigma$, the narrower and deeper the window (the zero at $\beta=0.574$ gives a one-point window with slope $-16$; the one at $\beta=0.870$ a wider window of depth only $-0.7$ at this $\sigma$).
+- **A functional equation, a Dirichlet series and a pole-free completion are all present, and the criterion still fails.** So no argument that uses only those can prove RH for $\zeta$. The Euler product is the missing ingredient, which supports your point.
+- **ζ passes the same test everywhere I looked**, including to $t=2000$.
+
+**What this does not show**
+
+- It does not say which property of the primes forces the zeros onto the line, or how strong the control must be. All the equivalent forms in this file are already phrased through the primes, so they restate the problem rather than solve it.
+- The scan only flags zeros with $\beta>\sigma=0.55$ and windows wider than the step $0.1$, so the five zeros are a lower bound, not a complete list of off-line zeros of $f$ below $t=300$.
+- Known theory points the same way. Davenport–Heilbronn showed this function has zeros off the line (and in $\operatorname{Re}s>1$), while some zeros lie on the line (the zero scan in Section 12.1 finds 464 of the 492 up to height 600). I could not verify how strong the known results on the line are, and an earlier draft of this section overstated them. That mixture is the same picture as the pair-correlation results in Section 10, where averaging controls proportions but not individual zeros.
+
+### 12.1 Zeros of the Davenport–Heilbronn function up to $T=600$
+
+- **On the line:** 464 sign changes of the real function $\Lambda(\tfrac12+it)$ (step $0.08$; $|\operatorname{Im}/\operatorname{Re}|\le1.4\times10^{-11}$ confirms $\Lambda$ is real there).
+- **Off the line:** slope scan at $\sigma=0.52$ (step $0.1$) gave 14 negative-slope windows, each leading by root finding to a distinct zero with $\operatorname{Re}s>\tfrac12$ (the five from the earlier scan plus nine more). A **fifteenth** zero, $0.5159+520.944\,i$, offset only $d=0.016$, was missed because the scan was run at $\sigma=0.52$ and it needs $d>0.02$; the prime-side scan of Section 17.6 found it. Real parts range from $0.516$ to $0.870$, none above $1$.
+
+| $\gamma$ | $\beta$ | $\gamma$ | $\beta$ |
+|---|---|---|---|
+| 85.70 | 0.8085 | 411.80 | 0.8159 |
+| 114.16 | 0.6508 | 440.48 | 0.7089 |
+| 166.48 | 0.5744 | 531.28 | 0.8470 |
+| 176.70 | 0.7243 | 548.91 | 0.7295 |
+| 240.40 | 0.8695 | 566.51 | 0.7866 |
+| 320.88 | 0.8196 | 595.02 | 0.5829 |
+| 331.05 | 0.7682 | 520.94 | 0.5159 |
+| 366.64 | 0.6285 | | |
+
+- **Completeness check:** each off-line zero comes with a partner at $1-\bar\rho$, so the zeros with $0<\gamma\le600$ number $464+2\times15=494$, against the asymptotic count $\tfrac{T}{2\pi}\log\tfrac{qT}{2\pi e}=493.6$ (error term $O(\log T)$). Before the fifteenth zero was found the count was $492$. The explicit formula gives a much stronger check: the Weil probe of Section 17 reproduces the arithmetic side to $10^{-9}$ for $T\le300$, and adding the zero at $520.94$ lowers the residual at that height from $1.3\times10^{-2}$ to $1.9\times10^{-6}$.
+- **On-line fraction:** $464/494=93.9\%$ in this range; this is an observation, not a claim about the limit.
+
+### 12.2 Pair-correlation sum on the Davenport–Heilbronn zeros
+
+I applied the Section 10 certificate to the full multiset $\{z_\rho=i(\rho-\tfrac12)\tfrac{\log T}{2\pi}\}$ (conjugation invariant, since off-line zeros come with $1-\bar\rho$), using the unsmoothed Montgomery–Taylor kernel and complex arguments. The finite inequality (2.4) holds with a large margin:
+
+| Set | $N$ | $\sum K^2/N$ | Certified $2-\sum K^2/N$ | True on-line fraction |
+|---|---|---|---|---|
+| Davenport–Heilbronn, $T=200$ | 130 | 1.2099 | 0.790 | 0.938 |
+| Davenport–Heilbronn, $T=400$ | 303 | 1.2571 | 0.743 | 0.947 |
+| Davenport–Heilbronn, $T=600$ | 494 | 1.2890 | 0.711 | 0.939 |
+| $\zeta$, $T=800$ (similar $N$) | 491 | 1.0863 | 0.914 | 1.000 |
+
+Splitting the sum at $T=600$:
+
+| Block | Contribution to $\sum K^2$ |
+|---|---|
+| on-line × on-line | 535.7 |
+| off-line × off-line (30 zeros) | 97.6 |
+| on-line × off-line (both orders) | 3.4 |
+| Total | 636.8 |
+
+**What this shows**
+
+- **Off-line zeros are expensive for the certificate.** The 30 off-line zeros (6.1% of the total) add $101.1$ to the sum, about $0.20N$, so each costs roughly $3.4$, not $1$. A zero at offset $d$ is paired with its partner $\bar z$ at vertical distance $2d\log T/2\pi$, and $K(iy)\ge1$ grows with $y$; the mean $K(z-\bar z)^2$ over these zeros is $2.25$ (range $1.00$–$4.55$). This is the mechanism behind the penalty seen in Section 10.1, now on real data. The offsets are $0.016$–$0.37$ (mean $0.22$); all but one are above $1/\log T\approx0.16$, so they are not in the region where the method is blind. The exception is the zero at $0.5159+520.94\,i$: its partner term is $1.00$, so the pair-correlation sum cannot tell it from a double zero, even though the prime-side scan of Section 17.6 does see it.
+- **Cross terms are tiny** (3.2 of 633). The off-line zeros interact almost only with their own partner, so the certificate reads them nearly independently of the on-line zeros.
+- **The certificate lags the truth.** It certifies $71\%$ while $94\%$ of these zeros are on the line. The gap is partly the density effect of Section 10.5 and partly the off-line penalty.
+- **Density comparison.** In the units $z=\gamma\log T/2\pi$ the DH zeros are denser than $\zeta$'s at the same $T$ (local density $\log(q\gamma/2\pi)/\log T$ with $q=5$). For the 464 on-line zeros alone, the measured $\sum K^2/N$ is $1.1545$; the GUE model of Section 10.5 with the correct density predicts $1.2287$, and with $\zeta$'s density $1.1085$. So the measured value is $0.074$ below the model, against residuals of about $-0.03$ to $-0.04$ for $\zeta$ at comparable height. This is suggestive of weaker correlation among the on-line zeros, but with only 464 zeros and a model calibrated on $\zeta$ I would not draw a conclusion from it.
+
+**What this does not show.** It uses $T\le600$ and 15 off-line zeros. The Lemma 3.1 asymptotics were proved for $\zeta$ and are not claimed for this function, so the table is empirical only. In particular I did not test whether averaging methods of the Section 9 type could certify a positive proportion for DH.
+
+## 13. The Prime Side: Explicit Formula for $\zeta$ and for Davenport–Heilbronn
+
+This section tests the claim that the Euler product turns control of primes into control of zeros, by running the explicit formula in both directions on $\zeta$ and on the Davenport–Heilbronn function $f$.
+
+### 13.1 Formulation
+
+**For $\zeta$.** From $\zeta(s)=\prod_p(1-p^{-s})^{-1}$ one gets $-\zeta'/\zeta(s)=\sum\Lambda(n)n^{-s}$, with $\Lambda(n)=\log p$ on prime powers and $0$ elsewhere. Perron's formula and residues give, for $x$ not a prime power,
+
+$$\psi(x)=\sum_{n\le x}\Lambda(n)=x-\sum_\rho\frac{x^\rho}{\rho}-\log2\pi-\tfrac12\log\bigl(1-x^{-2}\bigr).$$
+
+A zero with real part $\beta$ contributes a wave of size $x^{\beta}/|\rho|$. So $\psi(x)-x=O(x^{\theta})$ holds exactly when all zeros have $\beta\le\theta$, and RH is the case $\theta=\tfrac12$.
+
+**For $f$.** Write $f(s)=\sum a_nn^{-s}$ with $a_n=1,\kappa,-\kappa,-1,0$ for $n\equiv1,2,3,4,0\pmod5$. There is no Euler product, but $-f'/f=\sum b(n)n^{-s}$ still defines coefficients through Dirichlet inversion:
+
+$$b(n)=a_n\log n-\sum_{m\mid n,\,m>1}a_m\,b(n/m).$$
+
+The same residue calculation, with trivial zeros at $s=-1,-3,\dots$ (summing to $\operatorname{artanh}(1/x)$), the value at $s=0$, and no pole, gives
+
+$$S_f(x)=\sum_{n\le x}b(n)=-\sum_\rho\frac{x^\rho}{\rho}+\tfrac12\log\frac{x+1}{x-1}-\frac{f'(0)}{f(0)},\qquad -\frac{f'(0)}{f(0)}=-0.65176 .$$
+
+I checked the recursion for $b(n)$ against $\sum_{m\mid n}a_mb(n/m)=a_n\log n$ exactly (zero error) at seven values of $n$.
+
+**The structural difference.** For $\zeta$, $\Lambda$ lives only on prime powers (7.9% of $n\le10^6$). For $f$, $b(n)$ is nonzero on $25.5\%$ of the $n\le10^6$ that are not prime powers, with $b(2),b(3),b(4),b(6)=0.197,-0.312,-1.442,1.936$. Without multiplicativity the coefficients do not reduce to primes.
+
+### 13.2 Zeros reconstruct the primes (ζ)
+
+Evaluating the right-hand side at $x=n+\tfrac12$ for $n=2,\dots,200$ with the first $N$ zeros and comparing with $\psi(x)$ from a sieve:
+
+| Zeros used | Max error | RMS error |
+|---|---|---|
+| 10 ($\gamma\le50$) | 4.55 | 1.48 |
+| 100 ($\gamma\le237$) | 1.85 | 0.62 |
+| 1,000 ($\gamma\le1419$) | 0.46 | 0.13 |
+| 466,608 ($\gamma\le3\times10^5$) | 0.006 | 0.001 |
+
+The fluctuation being reconstructed, $\psi(x)-x$, has RMS $2.74$ on this range. Zeros determine the primes to better than $0.1\%$ of the signal.
+
+### 13.3 The same test on $f$ needs the off-line zeros
+
+Using the 492 zeros found in Section 12.1 ($\gamma\le600$) at $x=n+\tfrac12$, $n=2,\dots,100$ (RMS of $S_f$ is $2.94$):
+
+| Zeros included | Max error | RMS error |
+|---|---|---|
+| On-line zeros only | 1.53 | 0.64 |
+| On-line plus the 15 off-line pairs | 0.59 | 0.19 |
+
+The off-line terms alone have RMS $0.67$ here. So the coefficient sums $S_f(x)$ are inconsistent with a line-only zero set: the data on the prime side contain the off-line zeros, and including them reduces the error by a factor of about $3$. The remaining $0.19$ is of the same size as the truncation error of the $\zeta$ reconstruction with about $500$ zeros.
+
+### 13.4 Growth of the prime-side sum
+
+If all zeros lie on the line, the prime-side sum stays near $\sqrt x$. Measured directly from sieved coefficients up to $x=10^6$:
+
+| Range | $\max\lvert\psi(x)-x\rvert/\sqrt x$ ($\zeta$) | $\max\lvert S_f(x)\rvert/\sqrt x$ ($f$) |
+|---|---|---|
+| $x\le10^3$ | 0.924 | 1.41 |
+| $x\le10^4$ | 0.924 | 1.63 |
+| $x\le10^5$ | 0.924 | 3.05 |
+| $x\le10^6$ | 0.924 | 5.02 |
+
+(The $\zeta$ maximum occurs at $x=2$.) For $f$, $\max\lvert S_f\rvert$ is $144$, $934$ and $4620$ on the successive decades, local growth exponents $0.81$ and $0.69$. Both are well above $\tfrac12$ and consistent with the off-line zeros ($\beta$ up to $0.87$).
+
+How much of $S_f(x)$ at large $x$ is explained by the 14 known off-line zero pairs alone (random $x$ in each decade, no on-line terms):
+
+| $x$ | RMS of $S_f$ | RMS of off-line terms | RMS of difference | Correlation |
+|---|---|---|---|---|
+| $[10^3,10^4)$ | 39 | 24 | 32 | 0.59 |
+| $[10^4,10^5)$ | 214 | 159 | 152 | 0.71 |
+| $[10^5,10^6)$ | 1188 | 1061 | 500 | **0.91** |
+
+At large $x$ the sum is dominated by the few zeros with the largest real parts; what is left, about $0.4$–$0.7\sqrt x$, is the size of an ordinary $\sqrt x$ fluctuation.
+
+### 13.5 What this shows
+
+- **The Euler product makes primes and zeros dual.** Both reconstructions work, so control of the prime side (square-root cancellation in $\sum\Lambda(n)$) and control of the zero side are the same statement. This is the formulation of your "control on the primes".
+- **For $f$ the dual statement fails visibly.** Its prime-side sum grows like $x^{0.7}$–$x^{0.8}$ over the range tested because the zero set contains $\beta\approx0.87$. The $\zeta$ sum shows no such growth to $10^6$.
+- **It does not identify the source of the control.** The explicit formula translates RH into square-root cancellation for $\sum\Lambda(n)$ and nothing more; proving that cancellation is the open problem. The comparison with $f$ shows that a bare Dirichlet series with the same functional equation does not have it, and says nothing about why $\Lambda$ does.
+
+## 14. Prime-Side Domination and the Spectral (Weil Form) Test
+
+This section tests the Weil positivity criterion directly. It is both a "prime-side domination" statement (the main terms must dominate the prime sum) and a spectral one (a quadratic form that must have no negative eigenvalues).
+
+### 14.1 Formulation
+
+For an even test function $h$ analytic in the strip, with $g(u)=\frac1{2\pi}\int h(r)e^{-iru}\,dr$, the explicit formula reads
+
+$$\sum_\rho h(\gamma_\rho)\;=\;\underbrace{\text{pole}+\text{arch}}_{\text{main}}\;-\;\underbrace{2\sum_{n\ge1}\frac{c(n)}{\sqrt n}\,g(\log n)}_{\text{prime sum}},\qquad \gamma_\rho=\frac{\rho-\tfrac12}{i}.$$
+
+| | $\zeta$ | Davenport–Heilbronn $f$ |
+|---|---|---|
+| $c(n)$ | $\Lambda(n)$ | $b(n)$ from $-f'/f$ |
+| pole terms | $2h(\tfrac i2)$ | none |
+| arch | $-g(0)\log\pi+\frac1{2\pi}\int h\operatorname{Re}\psi(\tfrac14+\tfrac{ir}2)dr$ | $g(0)\log\tfrac5\pi+\frac1{2\pi}\int h\operatorname{Re}\psi(\tfrac34+\tfrac{ir}2)dr$ |
+
+For zeros on the line, $\gamma_\rho$ is real and $h=|\hat\varphi|^2$-type functions give $h(\gamma)\ge0$. So **RH $\iff$ the left side is $\ge0$ for every $h=\varphi^{\#}\!*\!\varphi$** (Weil's criterion). On a finite basis $\{\hat\varphi_j\}$ of even Gaussians $e^{-(r-t_j)^2/2w^2}+e^{-(r+t_j)^2/2w^2}$, set $h_{jk}=\hat\varphi_j\hat\varphi_k$ and define three symmetric matrices:
+
+$$A=\text{Main}-\text{Prime},\qquad\text{Main}_{jk},\quad\text{Prime}_{jk}\ \text{from the right side above.}$$
+
+- **Spectral form:** the eigenvalues of $A$. A negative eigenvalue exhibits a function $h$ with $\sum_\rho h(\gamma_\rho)<0$, which is impossible if all zeros are on the line.
+- **Domination ratio:** $D=\lambda_{\max}(\text{Prime},\text{Main})$, the largest generalized eigenvalue. $D\le1$ means the main terms dominate the prime sum in every direction of the basis; $D>1$ means some combination of test functions has prime sum exceeding main.
+
+Both are computed **from primes only**. I used $w=1$ and $m=7$ centers spaced by $1$, centered at the heights of the off-line zeros found in Section 12. The Gaussian tails make $g(\log n)\le10^{-20}$ beyond $n\approx10^6$, so the prime sums to $10^6$ are complete at that width.
+
+### 14.2 Check that the formula is right
+
+Compare the matrix computed from primes with the one computed directly from zeros, for a $5$-function basis centered at $85.7$:
+
+| Function | Max entry of $\lvert A_{\rm prime}-A_{\rm zero}\rvert$ | Max entry of $A_{\rm zero}$ |
+|---|---|---|
+| $\zeta$ (1000 zeros, primes to $10^6$) | $1.1\times10^{-12}$ | 2.44 |
+| Davenport–Heilbronn (492 zeros, $b(n)$ to $10^6$) | $1.1\times10^{-12}$ | 4.45 |
+
+For both functions the two sides agree to machine precision, so the implementation of the explicit formula is correct for each. An earlier version of this table showed a $10^{-3}$ disagreement for the Davenport–Heilbronn function; that was my error. The on-line zero positions had been estimated from sign changes on a grid of step $0.08$ and my attempt to refine them did not converge (see Section 17.2), leaving errors up to $0.015$. With properly refined positions the discrepancy disappears. The smallest eigenvalues of the two matrices agree ($-0.0670$ from both sides at $85.7$).
+
+### 14.3 Results
+
+Eigenvalues of $A$ are scaled by the diagonal of Main. "Min eig" is from the prime side.
+
+| Window center | Nearby off-line zero ($d=\beta-\tfrac12$) | $\zeta$: $D$ | $\zeta$: min eig | $f$: $D$ | $f$: min eig |
+|---|---|---|---|---|---|
+| 85.7 | 0.8085 (0.309) | 1.000000 | $-6\times10^{-14}$ | **1.458** | **−0.0700** |
+| 114.2 | 0.6508 (0.151) | 1.000000 | $+4\times10^{-11}$ | **1.088** | **−0.0092** |
+| 166.5 | 0.5744 (0.074) | 1.000000 | $+6\times10^{-10}$ | **1.007** | **−0.0004** |
+| 240.4 | 0.8695 (0.370) | 1.000000 | $+3\times10^{-9}$ | **1.484** | **−0.0305** |
+| 300.0 | none within $\pm8$ | 0.99978 | $+6\times10^{-6}$ | 0.849 | $+0.0031$ |
+| 450.0 | none within $\pm8$ | 0.99730 | $+7\times10^{-5}$ | 0.315 | $+0.0042$ |
+
+**What this shows**
+
+- **Domination holds for $\zeta$ in every window**, with $D=1$ to six digits: the prime sum is dominated by the main term and there are directions where the margin is zero to rounding.
+- **It fails for $f$ exactly in the windows containing off-line zeros.** Among those four windows, $D-1$ grows with the offset: $0.007$ at $d=0.074$, $0.088$ at $0.151$, $0.458$ at $0.309$ and $0.484$ at $0.370$. In the two windows with no nearby off-line zero, domination holds ($D<1$).
+- **This is a certificate built from primes only.** The negative eigenvector gives an explicit $h$ with negative value, computed from $b(n)/\sqrt n$ and the archimedean term without ever locating a zero. The zero locations were used only to choose windows and to confirm that the prime-side result matches.
+
+### 14.4 Limits
+
+- **$D\approx1$ for $\zeta$ is ill-conditioning.** Smooth Gaussians are nearly linearly dependent, so the form has directions with eigenvalues near $10^{-14}$ that cannot be told apart from zero in double precision. The table establishes "no negative eigenvalue beyond rounding", not a sharp margin; Section 14.5 confirms this at 130 digits.
+- **Resolution costs primes.** A Gaussian of width $w$ needs primes up to about $e^{14/w}$. At $w=1$ that is $10^6$ and detects offsets $d\gtrsim0.07$ in these windows; narrower functions, needed to see offsets much smaller than that or to separate zeros at larger heights, need exponentially more primes.
+- **One window at a time.** A proof needs all $h$ and all heights. This is a finite check, and it is the same kind of necessary condition that Sections 8 and 11 give for the other criteria.
+- **This is not Hilbert–Pólya.** The Weil form is a finite-dimensional quadratic form, not a self-adjoint operator whose spectrum is the set of zeros. Connes' trace-formula approach tries to realize the latter; I did not test an operator with that property.
+
+### 14.5 High-precision run on $\zeta$: does the positivity margin close as the basis grows?
+
+**Setup.** To see eigenvalues far below double precision, I recomputed the $\zeta$ matrix at 130 digits (mpmath). Even Gaussians of width $w=3$ centered at $t_j=10+1.5j$, so $m$ functions span $[10,\,10+1.5(m-1)]$. Prime sums use all $6{,}148$ prime powers up to $6\times10^4$ (the Gaussian tail beyond is $5\times10^{-119}$); the archimedean integral uses a trapezoid rule with step $1/60$, whose error for an integrand analytic in a strip of half-width $\tfrac12$ is about $e^{-\pi\cdot60}$; the zero side uses the first 80 zeros at 130 digits. A first attempt hit a noise floor of $6.8\times10^{-50}$, traced to an integration grid that started too far to the right for the centered Gaussian; after fixing it, $\max|A_{\rm prime}-A_{\rm zero}|=2.7\times10^{-86}$ for all $m$.
+
+**Result.** Smallest eigenvalue of $A=\text{Main}-\text{Prime}$:
+
+| $m$ | Span | Min eig, prime side | Min eig, zero side | Max eig |
+|---|---|---|---|---|
+| 2 | [10, 11.5] | $9.6049\times10^{-6}$ | $9.6049\times10^{-6}$ | 1.22 |
+| 4 | [10, 14.5] | $5.1725\times10^{-17}$ | $5.1725\times10^{-17}$ | 4.94 |
+| 6 | [10, 17.5] | $3.8413\times10^{-29}$ | $3.8413\times10^{-29}$ | 7.08 |
+| 8 | [10, 20.5] | $2.2064\times10^{-41}$ | $2.2064\times10^{-41}$ | 7.90 |
+| 10 | [10, 23.5] | $1.0991\times10^{-56}$ | $1.0991\times10^{-56}$ | 9.71 |
+| 12 | [10, 26.5] | $7.9486\times10^{-74}$ | $7.9486\times10^{-74}$ | 11.76 |
+| 14 | [10, 29.5] | $-4.2\times10^{-87}$ (noise) | $+1.4\times10^{-87}$ | 12.75 |
+| 16 | [10, 32.5] | $-1.1\times10^{-86}$ (noise) | $+9.3\times10^{-107}$ | 13.98 |
+| 20 | [10, 38.5] | $-1.8\times10^{-86}$ (noise) | $-1.3\times10^{-131}$ ($\approx0$) | 16.40 |
+
+**What this shows**
+
+- **No negative eigenvalue appears above the noise.** From primes alone the form is positive semidefinite down to $10^{-74}$, and it matches the zero side to every digit shown; beyond $m=12$ the prime side is limited by the $10^{-86}$ noise floor, while the zero side stays $\ge0$ to the working precision ($10^{-130}$).
+- **The margin closes, and closes fast.** $\log_{10}\lambda_{\min}$ is $-5.0,-16.3,-28.4,-40.7,-56.0,-73.1$ for $m=2,\dots,12$; each added pair of functions costs $11,12,12,15,17$ decades. This is faster than exponential in $m$. It is the conditioning of overlapping Gaussians, not information about zeros: $A=\sum_\gamma v(\gamma)v(\gamma)^T$ has only as many significant directions as there are zeros near the window, and a smooth basis soon contains null-like combinations.
+- **Consequence for the test.** For $\zeta$, "$\lambda_{\min}\ge0$" cannot have a visible margin in a basis of any size; it is a limit statement. A computed prime-side certificate for $\zeta$ can only say "no negative eigenvalue beyond precision $\epsilon$", and to push $\epsilon$ down one pays in digits and primes.
+- **Why the Davenport–Heilbronn test still works.** There the negative eigenvalue does not shrink as the basis grows: in the Section 14.3 normalization it is $-0.0670,-0.0698,-0.0764$ for $m=5,7,9$ at window $85.7$ (more negative, not less). A violation is visible as an $O(10^{-1})$ negative number, against $10^{-30}$ to $10^{-80}$ scales for $\zeta$.
+- **The main-terms matrix is not positive definite.** Cholesky of $\text{Main}$ fails from $m=6$ on at 130 digits. This is a real effect, not noise: the smallest eigenvalue of Main is $+0.039$ ($m=2$), $+1.7\times10^{-4}$ ($m=4$), then $-1.2\times10^{-5}$ ($m=6$), $-1.8\times10^{-5}$ ($m=8$) and $-2.1\times10^{-5}$ ($m=12$). The cause is that $\operatorname{Re}\psi(\tfrac14+\tfrac{ir}2)-\log\pi<0$ for $|r|\lesssim6.3$ and these Gaussians reach down to small $|r|$. So the domination ratio $D$ in Section 14.3 is only meaningful for windows at heights where the Gaussians lie entirely above $r\approx6.3$, as at $85.7$ and higher; the eigenvalue comparison here uses $A$ itself.
+
+**Limits.** One width ($w=3$), one spacing ($1.5$) and one window ($[10,38.5]$). The conclusion is about the conditioning of this family; a different basis (for example Connes' or Burnol's test functions) would have a different margin profile.
+
+## 15. Self-Adjoint Operators Equivalent to the Slope Condition
+
+**Goal.** Find self-adjoint operators whose positivity is *exactly* the slope condition $\operatorname{Re}\xi'/\xi(\sigma+it)>0$ for $\sigma>\tfrac12$ (Section 4). The answer below is a dictionary with classical objects, with a numerical test. It is an equivalence, not a proof of RH.
+
+### 15.1 Reformulation: the slope condition is a Nevanlinna condition
+
+Let $\Xi(z)=\xi(\tfrac12+iz)$: entire, even, real on $\mathbb R$, of order $1$, with zeros $\gamma_\rho=(\rho-\tfrac12)/i$. Since $\xi'/\xi(s)=-i\,\Xi'/\Xi(z)$,
+
+$$\operatorname{Re}\frac{\xi'}{\xi}(s)=\operatorname{Im}\frac{\Xi'}{\Xi}(z),\qquad z=t-i(\sigma-\tfrac12),$$
+
+so $\sigma>\tfrac12$ is the lower half-plane. Define $N(z)=-\Xi'(z)/\Xi(z)$. By conjugation symmetry $N(\bar z)=\overline{N(z)}$, so
+
+$$\textbf{(S)}\ \ \operatorname{Re}\tfrac{\xi'}{\xi}>0\ \text{for }\sigma>\tfrac12\iff \operatorname{Im}N(z)\ge0\ \text{for }\operatorname{Im}z>0\iff N\ \text{is a Nevanlinna (Herglotz) function.}$$
+
+**Proof sketch that (S) is equivalent to RH.** Hadamard gives $\Xi'/\Xi(z)=\sum_\gamma\frac1{z-\gamma}$ (zeros paired symmetrically). If all $\gamma$ are real, $\operatorname{Im}\frac1{z-\gamma}=-\frac{\operatorname{Im}z}{|z-\gamma|^2}<0$, so $\operatorname{Im}N>0$ on the upper half-plane. Conversely, a nonreal zero $z_0$ (and by symmetry one in the upper half-plane) makes $N\sim-m/(z-z_0)$ near it, and $\operatorname{Im}\frac1{z-z_0}$ takes both signs in every punctured neighbourhood, contradicting $\operatorname{Im}N\ge0$.
+
+### 15.2 The operators
+
+**(A) Pick matrices: a family of finite self-adjoint operators.** For points $z_1,\dots,z_n$ in the upper half-plane, set
+
+$$P_{jk}=\frac{N(z_j)-\overline{N(z_k)}}{z_j-\bar z_k}.$$
+
+By Pick's theorem, $N$ is Nevanlinna if and only if **every** such Hermitian matrix is positive semidefinite. So (S) $\iff$ all Pick matrices $\succeq0$, exactly, with no approximation. The case $n=1$ is the pointwise slope condition itself; larger $n$ adds conditions that look equally weak but see more (Section 15.3).
+
+**(B) de Branges space and the multiplication operator.** Take $A=\Xi$, $B=-\Xi'$ and $E=A-iB=\Xi+i\Xi'$. Then
+
+$$K(w,z)=\frac{B(z)\overline{A(w)}-A(z)\overline{B(w)}}{\pi(z-\bar w)}=\Xi(z)\overline{\Xi(w)}\;\frac{N(z)-\overline{N(w)}}{\pi(z-\bar w)} .$$
+
+This is the de Branges reproducing kernel of $E$, and it is positive definite exactly when $E$ is Hermite–Biehler ($|E(\bar z)|<|E(z)|$ for $\operatorname{Im}z>0$), which holds exactly when $N$ is Nevanlinna. So:
+
+$$\text{(S)}\iff\ \text{a Hilbert space }\mathcal H(E)\text{ of entire functions with kernel }K\text{ exists.}$$
+
+On it, $S:F\mapsto zF$ is a closed symmetric operator with deficiency indices $(1,1)$. Its self-adjoint extensions $T_\theta$ ($\theta\in[0,\pi)$) are a **family of self-adjoint operators** with pure point spectrum equal to the zeros of
+
+$$\Xi(z)\sin\theta+\Xi'(z)\cos\theta .$$
+
+At $\theta=\tfrac\pi2$ the spectrum is the zero set of $\Xi$, the zeta zeros; at $\theta=0$ it is the zero set of $\Xi'$; for all $\theta$ the spectra are simple, real and interlace. This is the Hilbert–Pólya shape: a self-adjoint operator whose spectrum is the set of zeros exists *if and only if* (S) holds. If (S) fails, the same construction gives a self-adjoint operator on a Pontryagin space (Krein–Langer) with $\kappa$ negative squares, whose spectrum includes the nonreal zeros.
+
+**(C) Canonical system.** By de Branges' theorem every Nevanlinna function is the Weyl function of a canonical system $J\,Y'(x)=z\,\mathcal H(x)Y(x)$ with Hamiltonian $\mathcal H(x)\succeq0$; the associated Dirac-type operator $L=\mathcal H^{-1}J\,d/dx$ is self-adjoint with spectrum the zeros of $\Xi$. So (S) $\iff$ the Hamiltonian built from $N$ is positive semidefinite.
+
+**(D) A related operator already in the literature.** Suzuki's screw function $g$ for $\zeta$ has kernel $G(t,u)=g(t-u)-g(t)-g(-u)+g(0)=\sum_\gamma\frac{(e^{i\gamma t}-1)(e^{-i\gamma u}-1)}{\gamma^2}$, and he proves the RH holds iff this kernel is non-negative definite, with a Weil-positivity analogue (arXiv 2206.03682, 2209.04658). That is the Fourier-side counterpart of (A); I did not establish a unitary equivalence between the two.
+
+The trivial operator, multiplication by the slope function on $L^2(\mathbb R)$, is positive exactly when the slope is, but that is the condition restated, so I do not count it.
+
+### 15.3 Numerical test of the Pick operators
+
+$N(z)=i\,\xi'/\xi(\tfrac12+\delta-it)$ at $z=t+i\delta$, computed for $\zeta$ and for the Davenport–Heilbronn function ($\Lambda'/\Lambda$). Pick matrices of $12$ points (spacing $0.5$), normalized by $\sqrt{|\text{diag}|}$; smallest eigenvalue:
+
+| Window | Off-line zero offset $d$ | $\zeta$ ($\delta=0.05$–$0.4$) | DH, $\delta=0.05$ | $0.1$ | $0.2$ | $0.4$ |
+|---|---|---|---|---|---|---|
+| 85.70 | 0.309 | $|\lambda|\le3\times10^{-16}$ | −8.8 | −13 | −7.7 | −0.65 |
+| 114.16 | 0.151 | $\le1\times10^{-15}$ | −0.90 | −0.73 | −0.37 | −0.084 |
+| 166.48 | 0.074 | $\le8\times10^{-15}$ | −0.16 | −0.13 | −0.069 | −0.015 |
+| 240.40 | 0.370 | $\le1\times10^{-13}$ | −5.5 | −6.3 | −57 | −0.92 |
+| 300 (no off-line zero) | — | $\le2\times10^{-13}$ | $+1\times10^{-9}$ | $+1\times10^{-9}$ | $+1\times10^{-9}$ | $+6\times10^{-10}$ |
+| 450 (no off-line zero) | — | $\le8\times10^{-12}$ | $+6\times10^{-9}$ | $+6\times10^{-9}$ | $+5\times10^{-9}$ | $+3\times10^{-9}$ |
+
+- **$\zeta$:** all Pick matrices are positive semidefinite to rounding ($|\lambda_{\min}|\le10^{-11}$), as RH requires.
+- **Davenport–Heilbronn:** a clearly negative eigenvalue in each window containing an off-line zero; positive in the two clean windows.
+- **The signature counts the off-line zeros.** With $16$ points per window, the number of eigenvalues below $-10^{-6}$ is $1$ in each of the four DH windows with one off-line zero, $0$ at $300$ and for $\zeta$ everywhere, and $2$ in a window containing two off-line zeros ($320.88$ and $331.05$). This is consistent with Krein–Langer theory (negative squares equal the number of nonreal poles in the upper half-plane); I did not prove the exact count.
+- **Pick matrices are more sensitive than the pointwise slope.** At $\delta=0.8$, eleven times the offset $d=0.074$, every point has $\operatorname{Im}N>0$ (minimum $1.80$) and the slope condition holds at all of them, yet the Pick matrix has eigenvalue $-5.6\times10^{-4}$ (at $\delta=0.4$: $-0.015$). Analyticity carries the failure far from the zero: no Nevanlinna function can interpolate those values.
+
+### 15.4 What this does and does not give
+
+- **Gives:** an exact operator-theoretic form of the slope condition at three levels (finite Hermitian matrices, a de Branges space with a family of self-adjoint operators whose spectra interlace, a canonical system with a Hamiltonian), a finite certificate for any failure (a negative eigenvector), and a signature that counts failures.
+- **Does not give:** a way to establish positivity. Each operator is built from $\Xi$, hence from the zeros; the content of RH is that the positive structure exists. To use (B) or (C) one would need to construct $\mathcal H(E)$ or $\mathcal H(x)$ from the primes, independently of the zeros, and prove positivity there. The Weil-form test in Section 14 is the prime-side route, and for $\zeta$ its margins vanish (Section 14.5).
+- **The Davenport–Heilbronn function** shows the construction is not vacuous: it has a clean $E$, a clean kernel, and the positive structure fails in exactly the windows with off-line zeros.
+
+## 16. Li Coefficients of the Davenport–Heilbronn Function
+
+Li's criterion in the form used for $\zeta$ applies to $\Lambda(s)=(5/\pi)^{(s+1)/2}\Gamma(\tfrac{s+1}2)f(s)$, which is entire with $\Lambda(s)=\Lambda(1-s)$: all zeros lie on the line iff $\lambda_n=\sum_\rho[1-(1-1/\rho)^n]\ge0$ for all $n$, with
+
+$$\lambda_n=\frac1{(n-1)!}\frac{d^n}{ds^n}\Bigl[s^{n-1}\log\Lambda(s)\Bigr]_{s=1}=n\sum_{k=1}^n\binom{n-1}{k-1}c_k,\qquad \log\Lambda(1+u)=\sum c_ku^k .$$
+
+### 16.1 Exact values for $n\le150$
+
+The nearest zero to $s=1$ is the first on-line zero at distance $5.12$. I computed $c_k$ from 512 points on the circle $|s-1|=3.6$ at 50 digits. The winding number of $\Lambda$ around the circle is $7.6\times10^{-52}$, so there is no zero inside.
+
+| $n$ | Exact $\lambda_n$ | $\tfrac n2\bigl(\log n-1+\gamma-\log\tfrac{2\pi}{5}\bigr)$ |
+|---|---|---|
+| 1 | 0.0976 | — |
+| 10 | 8.4897 | 8.2568 |
+| 50 | 83.502 | 81.520 |
+| 100 | 195.838 | 197.697 |
+| 150 | 327.983 | 326.956 |
+
+All $\lambda_n>0$ for $n\le150$ (the minimum is $\lambda_1=0.0976$). The comparison column is the analogue of the $\zeta$ asymptotic under RH, with $2\pi$ replaced by $2\pi/5$ for conductor $5$; I did not derive it, but it agrees within about $3\%$ for $n\ge10$ and within $0.3\%$ at $n=150$.
+
+### 16.2 Zero sum
+
+Summing $1-(1-1/\rho)^n$ over the 464 on-line zeros and the 15 off-line quadruples up to height $600$, plus a tail beyond $600$ that assumes all zeros there are on the line (density $\tfrac1{2\pi}\log\tfrac{5\gamma}{2\pi}$), reproduces the exact values to $8.8\times10^{-6}$ ($n=1$) rising to $6.1\times10^{-5}$ ($n=150$). The remaining error is the tail assumption and the zeros above $600$ that are not in my list. (With only the first 14 off-line zeros the error was $6.7\times10^{-5}$ to $4.4\times10^{-4}$; the Li coefficients, like the explicit formula, noticed the missing zero at $520.94$.) The sum uses the 14 quadruples below plus the fifteenth.
+
+The 15 off-line zeros are indistinguishable at these $n$: moving them onto the line at the same heights changes $\lambda_n$ by $-1.2\times10^{-7}$ ($n=1$) to $-3\times10^{-7}$ ($n=150$) relative. (An earlier summary of mine said the zero sum matched "only when the off-line zeros are included"; the 4% error I quoted came from dropping those 28 zeros altogether, not from their displacement.)
+
+### 16.3 Where $\lambda_n$ first goes negative
+
+Each off-line quadruple adds $-2\operatorname{Re}[w_1^n+w_2^n]$ with $w=1-1/\rho$, and $|w_2|>1$ for the partner $1-\bar\rho$. Using the asymptotic formula as baseline plus the 15 quadruples (minus the same zeros placed on the line):
+
+| Quantity | Value |
+|---|---|
+| First $n$ with $\lambda_n<0$ | $3.29\times10^{5}$ |
+| With baseline $-5\%$ / $+5\%$ | $3.27\times10^{5}$ / $3.30\times10^{5}$ |
+| Dominant zero | $0.8085+85.70\,i$, $\log\lvert w\rvert=4.2\times10^{-5}$ |
+| Amplitude crossing $2\lvert w\rvert^n=$ baseline | $3.29\times10^{5}$ |
+| Earlier rough scaling $\gamma^2\log(\gamma^2)/(2\beta-1)$ | $1.06\times10^{5}$ (a factor $3$ low) |
+
+This is an estimate: the baseline for large $n$ is the asymptotic formula, and zeros above height $600$ are not in my list. It does show that Li's test needs $n$ of order $\gamma^2$ to see even the lowest off-line zero of this function, far beyond the Weil-form and Pick tests of Sections 14 and 15 and the arithmetic-side probes of Section 17.
+
+## 17. Arithmetic-Side Certificates: the Experiment from the Note
+
+This section implements the experiment in the uploaded note: build the Weil functional from primes only, on test functions localized near height $T$ and shaped like (bump)$\,\times(r-T)^2$ so that a zero off the line makes the form negative; then ask how many primes are needed.
+
+### 17.1 Construction
+
+Take a Hann window $\omega(v)=\cos^2(\pi v/2a)$ on $|v|\le a$ and the probe $\hat\varphi(r)=(r-T)\hat\omega(r-T)$, i.e. $\varphi(v)=i\omega'(v)e^{-iTv}$. For real $r$ its square is $h(r)=(r-T)^2\hat\omega(r-T)^2\ge0$ (a bump times $(r-T)^2$). For a zero at $\gamma_\rho=T-id$ the factor $(r-T)$ is $-id$, so $\hat\varphi$ is purely imaginary and
+
+$$h(T-id)=\hat\varphi(T-id)^2=-d^2\,\hat\omega(id)^2<0 .$$
+
+Real zeros contribute $\ge0$ and the zero near $T$ contributes the negative amount. In the prime domain, $g(u)=\int\varphi(v+u)\overline{\varphi(v)}\,dv=R(u)\cos(Tu)$ with $R$ the autocorrelation of $\omega'$. It is supported on $|u|\le2a$, so **primes up to $e^{2a}$ give the exact value, with no truncation error**:
+
+$$W=2\!\int g\cosh\tfrac u2\,du\;(\zeta\text{ only})+\int_0^\infty\!\Bigl[g(0)\tfrac{e^{-2u}}u-\tfrac{2g(u)e^{-cu}}{1-e^{-2u}}\Bigr]du+g(0)\,\log(\cdot)-2\sum_n\frac{c(n)}{\sqrt n}g(\log n)$$
+
+with $c=\tfrac12$, $\log(\cdot)=-\log\pi$ for $\zeta$ and $c=\tfrac32$, $\log(\cdot)=\log\tfrac5\pi$ for the Davenport–Heilbronn function. The archimedean integral was derived in the prime domain from the integral representation of $\psi$; no real-axis integration is needed.
+
+### 17.2 Verification, and a mistake in my zero positions
+
+| Check | Result |
+|---|---|
+| $\zeta$: arithmetic $W$ vs. sum over 1000 zeros, $T=50,100$, $a=2,3,4$ | agree to $4\times10^{-11}$–$7\times10^{-10}$ |
+| Davenport–Heilbronn, $T\le300$, $a=1$–$6$, corrected zeros | agree to $2\times10^{-7}$–$7\times10^{-7}$ ($a=1$) down to $1\times10^{-10}$–$5\times10^{-10}$ ($a=6$) |
+
+The first version of the DH check disagreed by $10^{-3}$–$10^{-2}$, growing with $T$, and I spent time looking for missing zeros. The cause was my zero list. The "refinement" of the on-line zero positions called a root finder with an absolute tolerance of $10^{-18}$ on a function whose values near a zero are $\sim10^{-25}$, so it returned immediately and the positions were still the grid estimates, in error by up to $0.015$ (median $0.002$). I re-refined all 464 zeros with a scaled function at 30 digits. The explicit formula then closes to $10^{-9}$ or better for $T\le300$, which is also a strong completeness check on the zero list (including zeros with $\operatorname{Re}s>1$, which my slope scan at $\sigma=0.52$ cannot see). Sections 12.2, 13.3 and 14.2 have been corrected; the corrections change those numbers by less than $0.1\%$ except 14.2, where the disagreement is removed.
+
+### 17.3 How many primes are needed
+
+At fixed bandwidth $a$ the required cutoff is exactly $e^{2a}$ and does not depend on $T$. Partial sums converge slowly and with large cancellation. For $\zeta$ with $a=6$ (primes to $1.6\times10^5$):
+
+| $T$ | Exact $W$ | Smallest $N$ after which every partial sum is within $1\%$ | Most negative partial value |
+|---|---|---|---|
+| 100 | $+0.0633$ | $1.2\times10^{5}$ | $-0.90$ at $n=557$ |
+| 1000 | $+1.3347$ | $4.1\times10^{4}$ | $-0.064$ at $n=337$ |
+
+So the final positive value is not visible after the first few primes; at $T=100$ the partial sums are negative for $3\%$ of the range of $N$ before recovering. For the Davenport–Heilbronn violations, the partial sum first goes negative at $n=194$ ($T=85.7$, $a=5$, final $-6.46$) and $n=1186$ ($T=166.5$, $a=5$, final $-0.27$).
+
+### 17.4 The off-line zeros of the Davenport–Heilbronn function are all detected
+
+At $T=\gamma$ for each of the 14 off-line zeros, the form $W$ computed from $b(n)$ alone, at bandwidth $a=2,3,\dots,8$ (primes to $e^{16}=8.9\times10^6$):
+
+| $\gamma$ | $d$ | $W$ at $a=3$ | $a=4$ | $a=5$ | First negative $a$ | $\zeta$ min $W$ over $a$ |
+|---|---|---|---|---|---|---|
+| 85.70 | 0.309 | −1.83 | −3.66 | −6.46 | 3 | +0.017 |
+| 114.16 | 0.151 | −0.19 | −0.72 | −1.22 | 3 | +0.24 |
+| 166.48 | 0.074 | +0.05 | −0.13 | −0.27 | 4 | +0.11 |
+| 176.70 | 0.224 | +0.03 | −1.74 | −2.91 | 4 | +0.97 |
+| 240.40 | 0.370 | −1.39 | −5.58 | −10.55 | 3 | +0.30 |
+| 320.88 | 0.320 | −1.12 | −3.98 | −7.05 | 3 | +1.46 |
+| 331.05 | 0.268 | +0.75 | −2.01 | −4.51 | 4 | +2.24 |
+| 366.64 | 0.129 | +1.79 | −0.33 | −0.83 | 4 | +2.18 |
+| 411.80 | 0.316 | +0.27 | −3.07 | −6.81 | 4 | +0.74 |
+| 440.48 | 0.209 | +1.19 | −0.98 | −2.50 | 4 | +0.83 |
+| 531.28 | 0.347 | −0.92 | −4.76 | −8.83 | 3 | +2.01 |
+| 548.91 | 0.230 | +1.97 | −1.11 | −3.03 | 4 | +0.67 |
+| 566.51 | 0.287 | +1.83 | −2.38 | −5.31 | 4 | +0.81 |
+| 595.02 | 0.083 | +0.89 | −0.13 | −0.30 | 4 | +0.10 |
+
+All 14 are detected with $a\le4$, that is with primes up to $e^8\approx3000$, at offsets from $0.074$ to $0.37$ and heights from $86$ to $595$. The probe at $\zeta$'s zeros is positive for every $a$ and $T$ tried. The grid in $a$ has step $1$, so each "first negative $a$" is an upper bound to within $1$.
+
+The fifteenth zero ($0.5159+520.94\,i$, $d=0.016$), found later, is much harder: at $T=520.94$ the probe gives $W=+3.26,+0.98,+0.14,+0.019,-0.004$ for $a=3,4,5,5.5,6$, so it first goes negative at $a\approx6$ (primes to $1.6\times10^5$), and not monotonically afterwards ($+0.021$ at $a=7$, $-0.024$ at $a=8$) because the real zeros nearby change the background. That matches the planted-zero scaling below for $d\approx0.02$.
+
+### 17.5 Does the cutoff grow with $T$? A planted zero in $\zeta$
+
+The note expects the cutoff to grow like $T$. The 14 real zeros span only a factor $7$ in height, so I also planted an off-line quadruple at $\gamma_0\pm id$ into $\zeta$'s own zero set (removing the two neighbouring real zeros to keep the count), up to $T=2.8\times10^5$. For each height and offset I used 20 random positions and found the smallest bandwidth $a$ (probe at $T=\gamma_0$, $\pm0.5$) for which $W<0$. Median $a$ [quartiles]:
+
+| Height | $d=0.02$ | $d=0.05$ | $d=0.1$ | $d=0.2$ |
+|---|---|---|---|---|
+| $10^2$ | 3.88 [3.75, 4.25] | 3.25 [3.00, 3.25] | 2.50 [2.25, 3.00] | 2.25 [2.19, 2.75] |
+| $10^3$ | 5.25 [4.62, 6.00] | 4.00 [3.69, 5.00] | 3.75 [3.25, 4.50] | 3.25 [3.00, 3.75] |
+| $10^4$ | 6.50 [6.00, 7.12] | 5.25 [4.94, 5.81] | 4.88 [4.25, 5.25] | 4.12 [3.75, 4.25] |
+| $10^5$ | 7.88 [7.19, 8.50] | 6.38 [5.94, 7.50] | 5.75 [5.25, 6.56] | 4.75 [4.50, 5.25] |
+| $2.8\times10^5$ | 8.38 [7.94, 9.31] | 7.50 [6.19, 8.12] | 6.62 [5.69, 7.06] | 5.25 [4.94, 5.50] |
+
+Fitting $a=\alpha+\beta\ln T$ to the medians gives a prime cutoff $P=e^{2a}\propto T^{2\beta}$ with
+
+| $d$ | 0.2 | 0.1 | 0.05 | 0.02 |
+|---|---|---|---|---|
+| $2\beta$ | 0.73 | 0.99 | 1.04 | 1.14 |
+
+So for offsets $0.02$–$0.1$ the cutoff grows roughly **linearly in $T$**, as the note expected, and slightly faster for smaller offsets. The mechanism is that the bandwidth must scale like the zero density: the required $a$ is about $3$–$5$ mean zero spacings $2\pi/\log(T/2\pi)$ (the product $a\times$spacing falls from $5$–$9$ at $T=100$ to $3$–$5$ at $T\sim3\times10^5$), so $P=e^{2a}$ is a power of $T$.
+
+**Limits.** Single probe family, not optimized: an optimized basis (Section 14) can detect earlier, so these cutoffs are upper bounds on what a certificate needs. I did not test heights above $2.8\times10^5$, so anything beyond is extrapolation of the fit. $\zeta$ zero positions above $1.4\times10^3$ come from my Riemann–Siegel scan (error about $0.002$), which is small against the quantities tested. A fixed offset $d$ is assumed; a zero at $d\to0$ or at height $10^{12}$ would need a larger cutoff, which is the point of the note.
+
+### 17.6 Scanning over $T$: the Dirichlet-polynomial form of the probe
+
+For fixed $a$, the probe value is a function of $T$ alone,
+
+$$W(T)=\text{Main}(T)-\text{Prime}(T),\qquad \text{Prime}(T)=\sum_{n\le e^{2a}}s_n\cos(T\log n),\quad s_n=\frac{2c(n)R(\log n)}{\sqrt n},$$
+
+a trigonometric (Dirichlet) polynomial in $\log n$ with coefficients supported on primes and prime powers. Positivity of the Weil form on this family is exactly the inequality $\text{Prime}(T)\le\text{Main}(T)$ for all $T$: control of a prime-supported Dirichlet polynomial by a smooth main term. This is the form of "control on the primes" suggested in the discussion before Section 12. I evaluated both sides on a grid in $T$ (vectorized; checked against the pointwise computation of 17.1 to $10^{-6}$) for $T\in[3,700]$, step $0.02$, $a=4,5,6$:
+
+| $a$ (primes to) | $\zeta$: min $W$, $T\ge20$ | $\zeta$: max Prime/Main | DH: min $W$ | DH: negative windows |
+|---|---|---|---|---|
+| 4 (2980) | $+0.0003$ | $0.9997$ | $-5.58$ | 28 |
+| 5 (22,000) | $+0.0002$ | $0.9997$ | $-10.55$ | 40 |
+| 6 (162,000) | $+0.0003$ | $0.9997$ | $-18.29$ | 54 |
+
+**Results**
+
+- **$\zeta$: no violation anywhere** in $[3,700]$ at any of the three bandwidths. The ratio Prime/Main reaches $0.9997$: the prime-supported polynomial comes within $0.03\%$ of the main term. The smallest values of $W$ occur where the probe weights few zeros: at the height of a zero (where the factor $(r-T)^2$ removes it), and in gaps between zeros one to two units away, mostly at low heights ($T=20$–$45$) where zeros are sparse. So the Dirichlet-polynomial inequality holds with essentially no margin, in agreement with Section 14.5.
+- **Davenport–Heilbronn: the scan finds off-line zeros without being told where to look.** Every negative window lies within $2.6$ of a zero in the list of 18 below (all 28, 40 and 54 windows); each off-line zero produces a main window and side lobes about $1$–$1.5$ away from the oscillation of $\hat\omega$ at complex argument, which accounts for the larger window counts at larger $a$.
+- **Four new off-line zeros.** The scan flagged heights where my zero list had nothing: $T\approx521$ (seen at $a=6$ only), $647.0$, $657.1$ and $692.3$ (seen at all three $a$). Root finding on $f$ from those heights, with no further search, gives:
+
+| Height | Zero | $d=\beta-\tfrac12$ | Note |
+|---|---|---|---|
+| 520.94 | $0.5159+520.9438\,i$ | 0.016 | below $\sigma=0.52$, missed by my slope scan; inside the list's range |
+| 646.99 | $0.6108+646.9868\,i$ | 0.111 | above $T=600$, the end of my list |
+| 657.11 | $0.7606+657.1084\,i$ | 0.261 | above $T=600$ |
+| 692.89 | $0.7887+692.8925\,i$ | 0.289 | above $T=600$ |
+
+  Adding the zero at $520.94$ to the zero side lowers the explicit-formula residual at that height from $1.3\times10^{-2}$ to $1.9\times10^{-6}$ (Section 12.1), and improves the Li sum (Section 16.2). So the zero list below $T=600$ now has 464 on-line and 15 off-line zeros, and the arithmetic side alone had pointed to the one I had missed.
+
+**What this shows and does not show.** A prime-supported Dirichlet polynomial scanned over $T$ is a working detector for zeros off the line, including one only $0.016$ from it, and costs primes up to about $T^{1}$ at that offset (Section 17.5). It does not make positivity provable: for $\zeta$ the same inequality is tight, so no argument that loses even $0.03\%$ can prove it.
+
+### 17.7 The factorization step: is there a prime-indexed factor?
+
+The note's last step asks to factor the prime-side matrix and look for arithmetic structure, for instance rows indexed by primes. I built the Hermitian matrix $A=\text{Main}-\text{Prime}$ from primes only on $m=24$ Hann wave packets $\hat\varphi_j(r)=\hat\omega(r-t_j)$ centered at $t_j=T_0+(j-11.5)\Delta$, $\Delta=\pi/2a$ (twice Nyquist), $a=4$ (primes to $2980$), for $\zeta$ at $T_0=100$ and Davenport–Heilbronn at $T_0=85.7$, and ran four tests.
+
+**1. The natural factorization is over zeros, and it checks.** $A=V^\dagger V$ with rows of $V$ indexed by the zeros ($V_{\rho j}=\hat\varphi_j(\gamma_\rho)$). The prime-side and zero-side matrices agree to $1.1\times10^{-12}$ ($\zeta$) and $1.2\times10^{-12}$ (DH).
+
+**2. The inertia of $A$, from primes alone, counts zeros.**
+
+| | Positive eigenvalues | Negative | Numerically zero ($<10^{-8}\max$) | Zeros in window $\pm4$ |
+|---|---|---|---|---|
+| $\zeta$, $T_0=100$ | 11 | **0** | 13 | 8 |
+| DH, $T_0=85.7$ | 12 | **1** | 11 | 10 on the line, **1 off the line** ($85.70$) |
+
+The numerical rank exceeds the zero count in the window because zeros just outside contribute through the tails of the packets. The one negative eigenvalue for DH is the off-line zero: a complex pair $\gamma\pm id$ contributes a rank-two term with one positive and one negative direction, so the signature is (real zeros + off-line zeros, off-line zeros). This is the same count seen in the Pick matrices of Section 15, here computed from primes.
+
+**3. No prime-by-prime domination.** Adding primes in increasing order and recomputing the smallest eigenvalue of $\text{Main}-\text{Prime}_N$ for $\zeta$: it is negative for $88\%$ of the partial sums, down to $-6.5$ at $n=37$ (against $\|A\|=48$), and only returns to zero ($-6.6\times10^{-14}$) when every prime up to $e^{2a}$ is included. For DH it is negative throughout. The entrywise absolute-sum bound on the prime term is $176$ against $\|\text{Prime}\|=28.6$ and $\|\text{Main}\|=43.1$ for $\zeta$: a factor $6.2$ of cancellation among primes that a termwise domination argument cannot spend.
+
+**4. A prime-indexed Gram factor of the obvious type does not exist.** I tried to write $A$ as a nonnegative combination $\sum_nx_n\psi_n\psi_n^\dagger$ with $\psi_n=(\varphi_j(\log n))_j$, the packets sampled at the prime logarithms ($53$ prime powers up to $e^a$), by nonnegative least squares. The relative residual is $0.886$ for $\zeta$ and $0.885$ for DH, so the fit fails. This is what one expects: in the $v$-domain $A$ is a compressed convolution operator, which is not diagonal in a sampling at prime logarithms.
+
+**What this shows.** The only factorization visible is over zeros. The prime-side matrix knows the number of zeros and, through its signature, the number of off-line ones, but I found no positive structure indexed by primes, and the positivity for $\zeta$ appears only after cancellation among all primes in the window. This is a negative result for one window, one bandwidth and one family of candidate factors. It does not rule out a different prime-indexed factorization (the function-field intersection form is of that type).
+
+## 18. Open Next Steps
+
+1. Try other prime-indexed factorization ansätze for the prime-side matrix (Section 17.7 only excludes sampling at $\log n$ in one window), for example in the frequency domain or with weights tied to $\Lambda(n)/\sqrt n$.
+2. Extend the prime-side detection to an optimized basis (Section 14) and compare cutoffs with the single-probe values of Section 17.5.
+3. Replace the grid-based on-line zero list of the Davenport–Heilbronn function by a verified one up to larger height, and search properly for zeros with $\operatorname{Re}s>1$ (my slope scan at $\sigma=0.52$ cannot see them; the explicit-formula closure to $10^{-9}$ for $T\le300$ says there are none there).
+4. Check the claim about zeros of the Davenport–Heilbronn function on the line against the literature; Section 12 no longer states a proportion because I could not verify it.
+5. Study the Lean certificates (github.com/AxiomMath/ZetaZerosV2 and the Anthropic repository) to see what is and is not formally verified.
+
+## References
+
+- L. de Branges, *Hilbert Spaces of Entire Functions*, Prentice-Hall (1968).
+- M. Suzuki, "Aspects of the screw function corresponding to the Riemann zeta function," *J. London Math. Soc.* (2023), arXiv:2206.03682; "The screw line of the Riemann zeta-function and its applications," arXiv:2209.04658.
+- M. G. Krein and H. Langer, on generalized Nevanlinna functions and Pontryagin spaces (negative squares of the Pick kernel); cited from memory, not re-read here.
+
+- H. Davenport and H. Heilbronn, "On the zeros of certain Dirichlet series I, II," *J. London Math. Soc.* 11 (1936).
+
+- L. Alpöge and R. Furman, "More than two thirds of the zeros of the Riemann zeta function are simple and on the critical line," arXiv:2608.13637 (2026).
+- Y. Lamzouri, "A new proof that more than 2/3 of the zeros of the Riemann zeta function are simple and on the critical line," arXiv:2609.02882 (2026).
+- K. Pratt, N. Robles, A. Zaharescu, D. Zeindler, "More than five-twelfths of the zeros of ζ are on the critical line," *Res. Math. Sci.* 7 (2020).
+- D. Platt and T. Trudgian, "The Riemann hypothesis is true up to $3\cdot10^{12}$," *Bull. London Math. Soc.* 53 (2021).
+- M. Mossinghoff, T. Trudgian, A. Yang, "Explicit zero-free regions for the Riemann zeta-function," *Res. Number Theory* 10 (2024).
+- K. Ford, "Zero-free regions for the Riemann zeta function," in *Number Theory for the Millennium II* (2002).
+- D. Goldston and A. Suriajaya, "Zeta zeros on the critical line," arXiv:2511.20059.
+
+- X.-J. Li, "The positivity of a sequence of numbers and the Riemann hypothesis," *J. Number Theory* 65 (1997).
+- E. Bombieri and J. Lagarias, "Complements to Li's criterion for the Riemann hypothesis," *J. Number Theory* 77 (1999).
+- B. Rodgers and T. Tao, "The de Bruijn–Newman constant is non-negative," *Forum Math. Pi* 8 (2020).
