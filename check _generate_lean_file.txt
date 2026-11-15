@@ -1,0 +1,93 @@
+cd /home/squire && cat > mk_lean2.py << 'EOF'
+import json, sys
+from mpmath import mp, mpf, matrix, eigsy, nint
+mp.dps=60
+SC=mpf(10)**30
+def load(ck,m):
+    ck=json.load(open(ck)); A=matrix(m,m)
+    for j in range(m):
+        for k in range(j,m): A[j,k]=A[k,j]=mpf(ck[str(j)][k-j][0])
+    return A
+def ints(A,shift=0):
+    m=A.rows; return [[int(nint(A[i,j]*SC))+(shift if i==j else 0) for j in range(m)] for i in range(m)]
+def fmt(M): return "[\n  "+",\n  ".join("["+", ".join(str(v) for v in row)+"]" for row in M)+"\n]"
+def bareiss(M):
+    n=len(M); M=[r[:] for r in M]; prev=1; out=[]
+    for k in range(n):
+        piv=M[k][k]; out.append(piv)
+        for i in range(k+1,n):
+            for j in range(k+1,n): M[i][j]=(M[i][j]*piv-M[i][k]*M[k][j])//prev
+        prev=piv
+    return out
+def sign_changes(l):
+    return sum(1 for a,b in zip(l,l[1:]) if (a>0 and b<0) or (a<0 and b>0))
+windows=json.loads(sys.argv[1])   # list of [name, ckfile, m, kind, margin_exp]
+blocks=[]; thms=[]; info=[]
+for name,ck,m,kind,mexp in windows:
+    A=load(ck,m); ev,evec=eigsy(A)
+    if kind=="dh":
+        i0=min(range(m),key=lambda i: ev[i]); x=[int(nint(evec[j,i0]*mpf(10)**20)) for j in range(m)]
+        AI=ints(A); mins=bareiss(AI); quad=sum(x[i]*AI[i][j]*x[j] for i in range(m) for j in range(m)); marg=sum(abs(v) for v in x)**2
+        sc=sign_changes([1]+mins); ok=quad+marg<0 and all(v!=0 for v in mins)
+        info.append((name,float(ev[i0]),sc,ok))
+        blocks.append(f"def A_{name} : Mat := {fmt(AI)}\n\ndef x_{name} : List Int := {x}\n")
+        thms.append(f"theorem {name}_negative : quad A_{name} x_{name} + (l1 x_{name}) * (l1 x_{name}) < 0 := by decide +kernel\n\ntheorem {name}_inertia : (minors A_{name}).all (· != 0) = true ∧ signChanges (1 :: minors A_{name}) = {sc} := by decide +kernel\n")
+    else:
+        lmin=min(ev[i] for i in range(m)); shift=int(nint(lmin*SC*mpf('0.9')))   # margin = 0.9*lambda_min, scaled
+        AZ=ints(A,shift=-shift); mins=bareiss(AZ); ok=all(v>0 for v in mins)
+        info.append((name,float(lmin),shift,ok))
+        blocks.append(f"def A_{name} : Mat := {fmt(AZ)}   -- A_zeta - ({shift}/10^30) * I\n")
+        thms.append(f"theorem {name}_margin : (minors A_{name}).all (· > 0) = true := by decide +kernel\n")
+print(info)
+hdr='''set_option maxRecDepth 100000
+/-
+Certificates for the finite-prime Weil matrices of Sections 17.9-17.10 of Riemann_Hypothesis_Li_and_Monotonicity.md.
+
+CHECKED (exact integer arithmetic, kernel evaluation; no axioms):
+  * for each Davenport-Heilbronn window: a vector x with x^T A x < 0 that survives rounding every entry of A by one unit
+    of 10^-30, and the inertia of A (no vanishing leading minor, number of sign changes in 1, D_1, ..., D_m);
+  * for the zeta window: A - lambda I has all leading principal minors positive (Sylvester), i.e. A >= lambda I.
+
+NOT CHECKED: that the integers are the true Weil quadratic forms.  They are 50-digit numerical output (prime sums and
+quadrature for the archimedean term), compared with the zero side outside Lean (agreement 1e-13 to 1e-24).  The Jacobi/
+Sylvester theorems that turn minors into inertia are classical and are not formalised here.
+-/
+
+abbrev Mat := List (List Int)
+
+def dot (u v : List Int) : Int := (List.zipWith (· * ·) u v).foldl (· + ·) 0
+def mulVec (A : Mat) (x : List Int) : List Int := A.map (fun r => dot r x)
+def quad (A : Mat) (x : List Int) : Int := dot x (mulVec A x)
+def l1 (x : List Int) : Int := x.foldl (fun s v => s + Int.ofNat v.natAbs) 0
+
+def minors (M : Mat) : List Int := Id.run do
+  let n := M.length
+  let mut a : Array (Array Int) := (M.map List.toArray).toArray
+  let mut prev : Int := 1
+  let mut out : Array Int := #[]
+  for k in [0:n] do
+    let piv := a[k]![k]!
+    out := out.push piv
+    for i in [k+1:n] do
+      let mut row := a[i]!
+      for j in [k+1:n] do
+        row := row.set! j ((a[i]![j]! * piv - a[i]![k]! * a[k]![j]!) / prev)
+      a := a.set! i row
+    prev := piv
+  return out.toList
+
+def signChanges : List Int → Nat
+  | a :: b :: rest => (if (a > 0 && b < 0) || (a < 0 && b > 0) then 1 else 0) + signChanges (b :: rest)
+  | _ => 0
+
+'''
+body="\n".join(blocks)+"\n"+"\n".join(thms)
+ax="\n".join(f"#print axioms {t.split()[1]}" for t in "\n".join(thms).split("\n\n") if t.startswith("theorem"))
+open(sys.argv[2],'w').write(hdr+body+"\n"+ax+"\n")
+EOF
+python3 mk_lean2.py '[["dh_T857","ck_dh_85.7_4_14.json",14,"dh",0],["dh_T1665","ck_dh_166.4793059_4_10_40.json",10,"dh",0],["zeta_T857","ck_zeta_85.7_4_14.json",14,"zeta",0]]' Certificates2.lean
+export LEAN=/home/squire/lean415/lean-4.15.0-linux/bin; s=$(date +%s); timeout 250 $LEAN/lean Certificates2.lean 2>&1 | cut -c1-200 | head -12; echo "elapsed $(( $(date +%s)-s ))s"
+
+Response:
+
+{"returncode":0,"stdout":"[('dh_T857', -12.746624063257153, 1, True), ('dh_T1665', -0.5592305545240263, 1, True), ('zeta_T857', 8.759848536714523e-15, 7883863683043071, True)]\n'dh_T857_negative' does not depend on any axioms\n'dh_T857_inertia' does not depend on any axioms\n'dh_T1665_negative' does not depend on any axioms\n'dh_T1665_inertia' does not depend on any axioms\n'zeta_T857_margin' does not depend on any axioms\nelapsed 30s\n","stderr":""}
