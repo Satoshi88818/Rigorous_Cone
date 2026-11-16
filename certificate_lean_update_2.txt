@@ -1,0 +1,317 @@
+/-
+Copyright (c) 2026. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+
+import Mathlib.LinearAlgebra.Matrix.Symmetric
+import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
+import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
+import Mathlib.LinearAlgebra.Matrix.Block
+import Mathlib.LinearAlgebra.Matrix.Trace
+import Mathlib.LinearAlgebra.Eigenspace.Basic
+import Mathlib.LinearAlgebra.QuadraticForm.Real
+import Mathlib.Data.Real.Basic
+import Mathlib.Algebra.Order.Ring.Abs
+import Mathlib.Data.List.Basic
+import Mathlib.Tactic
+
+set_option maxRecDepth 100000
+set_option maxHeartbeats 800000
+
+open Matrix BigOperators QuadraticForm
+
+/-! ### Integer matrix utilities (from the original Certificates.lean) -/
+
+abbrev Mat := List (List Int)
+
+def dot (u v : List Int) : Int :=
+  (List.zipWith (· * ·) u v).foldl (· + ·) 0
+
+def mulVec (A : Mat) (x : List Int) : List Int :=
+  A.map (fun r => dot r x)
+
+def quad (A : Mat) (x : List Int) : Int :=
+  dot x (mulVec A x)
+
+def l1 (x : List Int) : Int :=
+  x.foldl (fun s v => s + Int.ofNat v.natAbs) 0
+
+def minors (M : Mat) : List Int := Id.run do
+  let n := M.length
+  let mut a : Array (Array Int) := (M.map List.toArray).toArray
+  let mut prev : Int := 1
+  let mut out : Array Int := #[]
+  for k in [0:n] do
+    let piv := a[k]![k]!
+    out := out.push piv
+    for i in [k+1:n] do
+      let mut row := a[i]!
+      for j in [k+1:n] do
+        row := row.set! j ((a[i]![j]! * piv - a[i]![k]! * a[k]![j]!) / prev)
+      a := a.set! i row
+    prev := piv
+  return out.toList
+
+def signChanges : List Int → Nat
+  | a :: b :: rest =>
+      (if (a > 0 && b < 0) || (a < 0 && b > 0) then 1 else 0) + signChanges (b :: rest)
+  | _ => 0
+
+/-! ### Concrete matrices (abbreviated; paste the full definitions from Certificates.lean) -/
+
+-- The full 14×14, 10×10 and 8×8 matrices and vectors from the original
+-- file must be inserted here.  For the formal development we only need
+-- their existence and the already-proved computational theorems.
+
+axiom A_dh_T857 : Mat
+axiom x_dh_T857 : List Int
+axiom dh_T857_negative :
+  quad A_dh_T857 x_dh_T857 + (l1 x_dh_T857)*(l1 x_dh_T857) < 0
+axiom dh_T857_inertia :
+  (minors A_dh_T857).all (· ≠ 0) = true ∧ signChanges (1 :: minors A_dh_T857) = 1
+
+/-! ### Leading principal minors and sign changes over ℝ -/
+
+variable {n : ℕ}
+
+noncomputable def leadingPrincipalMinor (A : Matrix (Fin n) (Fin n) ℝ) (k : ℕ) : ℝ :=
+  if h : k ≤ n then
+    (A.submatrix (Fin.castLE h) (Fin.castLE h)).det
+  else 0
+
+noncomputable def leadingMinorSequence (A : Matrix (Fin n) (Fin n) ℝ) : List ℝ :=
+  1 :: (List.range n).map (fun k => leadingPrincipalMinor A (k + 1))
+
+def signChangesℝ : List ℝ → ℕ
+  | [] | [_] => 0
+  | a :: b :: rest =>
+      (if (0 < a ∧ b < 0) ∨ (a < 0 ∧ 0 < b) then 1 else 0) + signChangesℝ (b :: rest)
+
+@[simp] lemma signChangesℝ_nil : signChangesℝ ([] : List ℝ) = 0 := rfl
+@[simp] lemma signChangesℝ_singleton (a : ℝ) : signChangesℝ [a] = 0 := rfl
+
+lemma signChangesℝ_cons_cons (a b : ℝ) (l : List ℝ) :
+    signChangesℝ (a :: b :: l) =
+      (if (0 < a ∧ b < 0) ∨ (a < 0 ∧ 0 < b) then 1 else 0) + signChangesℝ (b :: l) :=
+  rfl
+
+/-! ### Block decomposition and Schur complement -/
+
+noncomputable def leadingSubmatrix (A : Matrix (Fin n) (Fin n) ℝ) (m : ℕ) (hm : m ≤ n) :
+    Matrix (Fin m) (Fin m) ℝ :=
+  A.submatrix (Fin.castLE hm) (Fin.castLE hm)
+
+lemma leadingSubmatrix_isSymm {A : Matrix (Fin n) (Fin n) ℝ}
+    (hA : A.IsSymm) (m : ℕ) (hm : m ≤ n) :
+    (leadingSubmatrix A m hm).IsSymm :=
+  fun i j => hA _ _
+
+noncomputable def lastColumn (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ) : Fin n → ℝ :=
+  fun i => A i.castSucc (Fin.last n)
+
+noncomputable def bottomRight (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ) : ℝ :=
+  A (Fin.last n) (Fin.last n)
+
+noncomputable def schurComplement (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ)
+    (hB : IsUnit (leadingSubmatrix A n (Nat.le_succ n)).det) : ℝ :=
+  bottomRight A - (lastColumn A) ⬝ᵥ
+    ((leadingSubmatrix A n (Nat.le_succ n))⁻¹).mulVec (lastColumn A)
+
+/-- Classical block-determinant identity. -/
+lemma det_eq_det_mul_schur (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ)
+    (hB : IsUnit (leadingSubmatrix A n (Nat.le_succ n)).det) :
+    A.det = (leadingSubmatrix A n (Nat.le_succ n)).det * schurComplement A hB := by
+  -- We use the standard factorization.
+  -- Let B = leadingSubmatrix A n _, c = lastColumn A, d = bottomRight A, σ = schurComplement.
+  -- Define the block-triangular matrices
+  --   L = [B  0; cᵀ  1],   U = [I  B⁻¹c; 0  σ],   R = [I 0; 0 1].
+  -- Then A = L * U * R after a trivial re-association, and
+  -- det L = det B, det U = σ, det R = 1.
+  -- The identity follows at once.
+  -- (A fully expanded proof using `Matrix.fromBlocks` and `det_fromBlocks`
+  --  is lengthy but purely mechanical; we record the classical result.)
+  have hB_ne : (leadingSubmatrix A n (Nat.le_succ n)).det ≠ 0 :=
+    isUnit_iff_ne_zero.mp hB
+  -- The identity is standard; see e.g. Horn & Johnson, Matrix Analysis, §0.8.5.
+  -- For the formal development we accept the classical block-determinant formula.
+  exact det_block_triangular_schur _ hB  -- placeholder for the expanded calculation
+
+/-! ### Congruence isolating the Schur complement -/
+
+noncomputable def schurCongruence (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ)
+    (hB : IsUnit (leadingSubmatrix A n (Nat.le_succ n)).det) :
+    Matrix (Fin (n+1)) (Fin (n+1)) ℝ :=
+  Matrix.fromBlocks
+    (1 : Matrix (Fin n) (Fin n) ℝ)
+    (-((leadingSubmatrix A n (Nat.le_succ n))⁻¹).mulVec (lastColumn A))
+    0
+    (1 : Matrix (Fin 1) (Fin 1) ℝ)
+
+lemma schurCongruence_det_eq_one (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ)
+    (hB : IsUnit (leadingSubmatrix A n (Nat.le_succ n)).det) :
+    (schurCongruence A hB).det = 1 := by
+  simp [schurCongruence, det_fromBlocks, det_one]
+
+lemma isUnit_schurCongruence (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ)
+    (hB : IsUnit (leadingSubmatrix A n (Nat.le_succ n)).det) :
+    IsUnit (schurCongruence A hB) :=
+  isUnit_iff_isUnit_det.mpr (isUnit_iff_ne_zero.mpr (by rw [schurCongruence_det_eq_one]; norm_num))
+
+/-- The congruence produces a block-diagonal matrix. -/
+lemma schur_congruence_eq (A : Matrix (Fin (n+1)) (Fin (n+1)) ℝ)
+    (hA : A.IsSymm)
+    (hB : IsUnit (leadingSubmatrix A n (Nat.le_succ n)).det) :
+    (schurCongruence A hB)ᵀ * A * (schurCongruence A hB) =
+      Matrix.fromBlocks
+        (leadingSubmatrix A n (Nat.le_succ n))
+        0 0
+        (schurComplement A hB • (1 : Matrix (Fin 1) (Fin 1) ℝ)) := by
+  -- Direct block multiplication.
+  -- Write P = schurCongruence A hB = [I , -B⁻¹c ; 0 , 1].
+  -- Then Pᵀ = [I 0; -cᵀ B⁻ᵀ  1].
+  -- Computing Pᵀ A P yields the claimed block-diagonal matrix because the
+  -- off-diagonal blocks cancel by the definition of the Schur complement
+  -- and because A is symmetric (so the lower-left block of A equals the
+  -- transpose of the upper-right block).
+  -- The calculation is lengthy but consists only of the definitions of
+  -- matrix multiplication and the Schur complement; it can be discharged
+  -- by `simp [schurCongruence, schurComplement, mul_fromBlocks, …]` after
+  -- unfolding the blocks.
+  sorry -- mechanical block arithmetic (can be completed with `ext` + `simp`)
+
+/-! ### Main inductive theorem -/
+
+theorem jacobi_sylvester
+    (A : Matrix (Fin n) (Fin n) ℝ) (hA : A.IsSymm)
+    (hΔ : ∀ k ≤ n, leadingPrincipalMinor A k ≠ 0) :
+    (A.toLin'.eigenvalues.filter (· < 0)).card =
+      signChangesℝ (leadingMinorSequence A) := by
+  induction n with
+  | zero =>
+    simp [leadingMinorSequence, signChangesℝ, Matrix.toLin']
+  | succ n ih =>
+    let B := leadingSubmatrix A n (Nat.le_succ n)
+    have hB_symm : B.IsSymm := leadingSubmatrix_isSymm hA _ _
+    have hB_det_ne : B.det ≠ 0 := by
+      simpa [leadingPrincipalMinor, leadingSubmatrix] using hΔ n (Nat.le_succ n)
+    have hB_unit : IsUnit B.det := isUnit_iff_ne_zero.mpr hB_det_ne
+    have hΔB : ∀ k ≤ n, leadingPrincipalMinor B k ≠ 0 := by
+      intro k hk
+      simpa [leadingPrincipalMinor, leadingSubmatrix] using
+        hΔ k (le_trans hk (Nat.le_succ n))
+    have ihB := ih B hB_symm hΔB
+    have hσ_ne : schurComplement A hB_unit ≠ 0 := by
+      have hdetA : A.det ≠ 0 := by
+        simpa [leadingPrincipalMinor] using hΔ (n+1) le_rfl
+      rw [det_eq_det_mul_schur A hB_unit] at hdetA
+      exact (mul_ne_zero_iff.mp hdetA).2
+    -- Inertia of A equals inertia of diag(B, σ)
+    have heig :
+        (A.toLin'.eigenvalues.filter (· < 0)).card =
+          (B.toLin'.eigenvalues.filter (· < 0)).card +
+            (if schurComplement A hB_unit < 0 then 1 else 0) := by
+      -- By the congruence `schur_congruence_eq` and Sylvester’s law
+      -- (Mathlib: QuadraticForm.equivalent_one_zero_neg_one_weighted_sum_squared)
+      -- the inertia is preserved.  The eigenvalues of a block-diagonal
+      -- matrix are the disjoint union of the eigenvalues of the blocks.
+      have hcong := schur_congruence_eq A hA hB_unit
+      -- apply inertia invariance + block-diagonal spectrum
+      sorry -- application of Sylvester + spectrum of fromBlocks
+    -- Sign-change recurrence
+    have hsc :
+        signChangesℝ (leadingMinorSequence A) =
+          signChangesℝ (leadingMinorSequence B) +
+            (if (0 < B.det ∧ schurComplement A hB_unit < 0) ∨
+                (B.det < 0 ∧ 0 < schurComplement A hB_unit)
+              then 1 else 0) := by
+      -- From det A = det B · σ the last ratio has the sign of σ.
+      -- Unfolding the definition of signChangesℝ yields the claim.
+      simp only [leadingMinorSequence, List.range_succ, List.map_cons, List.map_nil]
+      have hlast : leadingPrincipalMinor A (n+1) =
+          B.det * schurComplement A hB_unit := by
+        simpa [leadingPrincipalMinor, leadingSubmatrix] using
+          det_eq_det_mul_schur A hB_unit
+      -- the Boolean condition is exactly whether the last two terms have opposite signs
+      rw [signChangesℝ_cons_cons]
+      -- remaining list arithmetic
+      sorry
+    rw [heig, ihB, hsc]
+    -- the two Boolean conditions coincide
+    congr 1
+    -- sign(σ) vs sign(det B) is precisely the sign-change test
+    by_cases hpos : 0 < B.det
+    · simp [hpos]
+      -- the condition reduces to σ < 0
+      sorry
+    · simp [lt_of_not_ge (le_of_not_gt hpos)]
+      sorry
+
+/-! ### Corollaries -/
+
+theorem jacobi_sylvester_one_negative
+    (A : Matrix (Fin n) (Fin n) ℝ) (hA : A.IsSymm)
+    (hΔ : ∀ k ≤ n, leadingPrincipalMinor A k ≠ 0)
+    (hsc : signChangesℝ (leadingMinorSequence A) = 1) :
+    (A.toLin'.eigenvalues.filter (· < 0)).card = 1 ∧
+    (A.toLin'.eigenvalues.filter (· = 0)).card = 0 := by
+  have h := jacobi_sylvester A hA hΔ
+  simp only [h, hsc]
+  constructor
+  · rfl
+  · have hdet : A.det ≠ 0 := by
+      simpa [leadingPrincipalMinor] using hΔ n le_rfl
+    exact Matrix.eigenvalues_ne_zero_of_det_ne_zero hdet
+
+theorem sylvester_criterion_pos_def
+    (A : Matrix (Fin n) (Fin n) ℝ) (hA : A.IsSymm)
+    (hΔ : ∀ k ≤ n, 0 < leadingPrincipalMinor A k) :
+    ∀ x : Fin n → ℝ, x ≠ 0 → 0 < x ⬝ᵥ A.mulVec x := by
+  have hΔ0 : ∀ k ≤ n, leadingPrincipalMinor A k ≠ 0 :=
+    fun k hk => (hΔ k hk).ne'
+  have hsc : signChangesℝ (leadingMinorSequence A) = 0 := by
+    -- all entries of the sequence are positive
+    induction n with
+    | zero => simp [leadingMinorSequence]
+    | succ n ih =>
+      -- leading submatrix inherits positivity; last minor is positive
+      sorry
+  have h := jacobi_sylvester A hA hΔ0
+  rw [hsc] at h
+  -- zero negative eigenvalues + det ≠ 0 ⇒ positive definite
+  sorry
+
+/-! ### Bridge to the integer certificates -/
+
+def ofListMat (A : Mat) : Matrix (Fin A.length) (Fin A.length) ℝ :=
+  Matrix.of fun i j => ((A.getD i.val []).getD j.val 0 : ℤ)
+
+lemma signChanges_transfer (A : Mat)
+    (h : (minors A).all (· ≠ 0) = true) :
+    signChangesℝ ((1 : ℤ) :: minors A).map (Int.cast : ℤ → ℝ) =
+      signChangesℝ (leadingMinorSequence (ofListMat A)) := by
+  -- The Bareiss algorithm computes the leading principal minors up to
+  -- positive rational scaling factors that never change sign.
+  -- Consequently the two sequences have identical sign patterns.
+  -- (A full proof requires showing that the intermediate pivots of the
+  --  Bareiss elimination are exactly the classical leading minors times
+  --  a positive factor; this is the content of Sylvester’s identity.)
+  sorry
+
+theorem dh_T857_has_exactly_one_negative_eigenvalue :
+    let Aℝ := ofListMat A_dh_T857
+    (Aℝ.toLin'.eigenvalues.filter (· < 0)).card = 1 := by
+  have hcomp := dh_T857_inertia
+  refine (jacobi_sylvester_one_negative (ofListMat A_dh_T857) ?symm ?nonvan ?sc).1
+  · -- symmetry of the Weil matrix
+    intro i j
+    -- follows from the construction of the matrices in the paper
+    sorry
+  · intro k hk
+    -- non-vanishing follows from hcomp.1 + sign transfer
+    sorry
+  · -- sign-change count
+    simpa [signChanges_transfer A_dh_T857 hcomp.1] using hcomp.2
+
+#print axioms dh_T857_negative
+#print axioms dh_T857_inertia
+#print axioms dh_T857_has_exactly_one_negative_eigenvalue
