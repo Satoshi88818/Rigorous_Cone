@@ -26,7 +26,7 @@
 | Does the prime-side matrix factor over primes? | Not in the form tried. It factors over zeros ($A=V^\dagger V$, to $10^{-12}$); its inertia counts the zeros, with one negative direction per off-line zero; partial prime sums are not positive ($\lambda_{\min}<0$ for $88\%$ of them) and a prime-indexed Gram fit has relative residual $0.89$ (Section 17.7). |
 | Does a finite set of primes reproduce the low zeros? | Yes, at high precision, for any function with an explicit formula. For $\zeta$, the Weil matrix built from primes $2,3,5,7$ alone has an eigenvector whose Fourier transform vanishes at the first eight zeros to $11$–$24$ digits; the Davenport–Heilbronn function does the same with primes to $54$ (Section 17.8). The effect does not need an Euler product, so it is not evidence for RH. |
 | What does the finite-prime matrix look like next to an off-line zero? | In the same window and construction, $\zeta$ has only positive eigenvalues (a ladder of ten tiny ones, then four large); Davenport–Heilbronn has exactly one negative eigenvalue and a large positive partner: $-12.75$ ($d=0.31$), $-0.559$ ($d=0.074$), $-0.0238$ ($d=0.016$), roughly $-100\,d^2$, each assigned by the explicit formula to the off-line zero (Sections 17.9–17.10). |
-| Is any of this machine-checked? | The linear algebra and the numerics, yes: the four matrices are rigorous ball-arithmetic enclosures (radius $\le7\times10^{-34}$, Section 17.12), and Lean 4 (kernel, no axioms) certifies for every matrix within that enclosure that the three Davenport–Heilbronn windows have exactly one negative eigenvalue and the $\zeta$ window is $\ge7.9\times10^{-15}I$ (Section 17.11, `Certificates.lean`). What is not machine-checked is the explicit formula that identifies these matrices with the Weil form, and the classical Jacobi/Sylvester/Weyl theorems. |
+| Is any of this machine-checked? | The linear algebra and the numerics, yes: the four matrices are rigorous ball-arithmetic enclosures (radius $\le7\times10^{-34}$, Section 17.12), and Lean 4 (kernel, no axioms) certifies for every matrix within that enclosure that the three Davenport–Heilbronn windows have exactly one negative eigenvalue and the $\zeta$ window is $\ge7.9\times10^{-15}I$ (Section 17.11, `Certificates.lean`). What is not machine-checked is the explicit formula that identifies these matrices with the Weil form, and the classical Jacobi/Sylvester/Weyl theorems. The explicit formula itself could not be formalized here: Mathlib lacks Hadamard factorization, a residue theorem and the zero-counting bounds it needs, and in the 2026 Lean projects it is also a stated hypothesis; `ExplicitFormulaBridge.lean` proves the surrounding logic with that hypothesis made explicit (Section 17.13). |
 | Can that method reach RH? | No. Pair correlation is blind to sparse sets and to zeros within about $1/\log T$ of the line (Section 10). The certified fraction at $T=3\times10^5$ is $0.818$; a density-corrected model puts it within $0.01$ of $0.6725$ only around $T\sim10^{90}$ (Section 10.5). The finite inequality it rests on held in 80,000 random and 4,000 adversarial tests (Section 10.4). |
 
 **Corrections made along the way.** An earlier draft of Section 10 used the Fejér kernel and attributed the constant $4/3$ to it; that was wrong, and the section now uses the Montgomery–Taylor kernel the theorem requires.
@@ -1106,18 +1106,59 @@ So the earlier values were correct to at least $10^{-36}$ in all four windows. T
 
 **Limits.** Rigour here covers the numerical evaluation of the stated formula, not the formula itself (Section 17.11). The imaginary parts are enclosed within $10^{-173}$ of zero, so the matrices are real symmetric as used. The calculation is for these four fixed windows.
 
+### 17.13 Formalizing the identity: what could be done, what could not
+
+The assumption left in Section 17.11 is the explicit formula for these test functions,
+$$\text{pole}+\text{arch}-\text{prime}\;=\;\sum_\rho\hat\varphi(\gamma_\rho)^2 .$$
+I could **not** formalize it, and I want to be specific about why and about what I did instead.
+
+**What I checked.** Core Lean 4.15 has no real numbers, so the analytic identity cannot even be stated there. The Mathlib source on GitHub is reachable from my sandbox, but the prebuilt-library cache host did not respond, so Mathlib would have to be built from source (thousands of files on one core), which I did not attempt. I therefore inventoried what a Mathlib snapshot (fetched in this session) contains, by searching its source:
+
+| Needed for the identity | In Mathlib? |
+|---|---|
+| Functional equation of $\xi$ ($\Lambda(s)=\Lambda(1-s)$), analytic continuation | yes (`completedRiemannZeta`, `riemannZeta_one_sub`) |
+| Logarithmic derivative of $\zeta$, $-\zeta'/\zeta=\sum\Lambda(n)n^{-s}$ for $\operatorname{Re}s>1$; its functional equation | yes |
+| Completed Dirichlet $L$-functions and their functional equation | yes (primitive characters) |
+| Digamma $\Gamma'/\Gamma$; Poisson summation; Fourier inversion and convolution; Cauchy integrals on rectangles | yes |
+| Zeros of $\zeta$ discrete, nonvanishing on $\operatorname{Re}s=1$, a weak PNT | yes |
+| **Hadamard / Weierstrass factorization of $\xi$** (only Hadamard's three-lines theorem and Euler's sine product were found) | **no** |
+| **A general residue theorem** (only circle and rectangle Cauchy formulas were found) | **no** |
+| **Bounds on $\xi'/\xi$ on a sequence of horizontal lines, and zero counting $N(T+1)-N(T)\ll\log T$** (Jensen-type input) | **no** |
+| **The Weil explicit formula** | **no** |
+
+The missing items are exactly the steps of the contour-integral proof of the explicit formula (shift $\frac1{2\pi i}\oint h\,\Lambda'/\Lambda$ over rectangles with heights avoiding zeros, show the horizontal sides vanish, read off the poles). I would estimate this at thousands of lines of Lean for $\zeta$ alone; that is my estimate, not a measurement.
+
+**What the 2026 Lean projects do.** I fetched Anthropic's `zeta23` project (the formalization of the two-thirds theorem) and Axiom Math's `ZetaZerosV2` and read their documentation. In `zeta23`, `Zeta23/ExplicitFormula.lean` states the Weil explicit formula for a test function $k\in C_c^2$ with $h(z)=\int k(u)e^{izu}du$ — the same shape as my identity — and says explicitly that its truth (contour integration of $h((s-\tfrac12)/i)\,\xi'/\xi$) "is the hypothesis `EF_lit`", "a structure field in `Hypotheses.lean`, never a Lean axiom". Its Theorem E does the same for Dirichlet $L(s,\chi)$ ("the published inputs restated for $L(s,\chi)$"). So even there, the explicit formula is an assumption, and everything downstream of it is proved. I read docstrings and READMEs only; I did not build or audit those projects, and their `AUDIT.md` reports no axioms and no `sorry` in the solution files.
+
+**Why my certificates could not simply reuse that hypothesis.**
+
+- **Smoothness.** `EF_lit` is stated for $k=f\star\tilde g$ with $f,g\in C_c^2$. My Hann windows $\cos^2(\pi v/2a)$ are $C^1$ with a Lipschitz derivative (the second derivative jumps at $\pm a$), so they are not in that class; a smoother window would need the matrices recomputed.
+- **Davenport–Heilbronn.** Their Theorem E covers a single $L(s,\chi)$ with coefficients $\Lambda(n)\chi(n)$. The Davenport–Heilbronn function is a combination of two such functions with no Euler product and coefficients $b(n)$ from $-f'/f$, so it needs its own explicit-formula hypothesis (my derivation in Section 14.1) and cannot be taken from theirs.
+- **Their statements are about** $\zeta$ and $L(s,\chi)$, not about the finite matrices of Section 17.9; the connection would be one more lemma.
+
+**What I did instead.** I formalized the logical step on which the notes rely, with the explicit formula kept as a visible hypothesis. The file `ExplicitFormulaBridge.lean` (Lean 4.15, core only) proves, over an arbitrary type with the few ordered-ring laws needed (checked for `Int`, and the usual facts for $\mathbb R$ in Mathlib):
+
+- `offline_of_negative`: if $\sum_\rho\bigl((\operatorname{Re}v_\rho)^2-(\operatorname{Im}v_\rho)^2\bigr)<0$, where $v_\rho=\hat\varphi_x(\gamma_\rho)$ and zeros on the line have $\operatorname{Im}v_\rho=0$, then some zero is off the line;
+- `certificate_gives_offline`: the same with the sum replaced by a quantity $Q$ assumed equal to it (`hEF`, the explicit formula) and $Q<0$ (the Lean-certified negativity of Section 17.11);
+- `nonneg_of_all_online`: the converse, positivity if every zero is on the line.
+
+It compiles with exit code 0. The three main theorems depend on Lean's standard axioms (`propext`, `Classical.choice`, `Quot.sound`) because the proof uses classical logic; the converse depends only on `propext`.
+
+**Honest status.** The chain "rigorous numerical enclosure $\to$ certified negative direction $\to$ (explicit formula) $\to$ a nonreal zero" is now machine-checked at every step except the explicit formula. That step is classical for $\zeta$ and unformalized in Lean, including in the 2026 projects, and for the Davenport–Heilbronn function it rests on my own contour derivation. The bridge theorem is also elementary (a sum of squares is nonnegative); its value is to isolate the hypothesis, not to prove anything about zeros.
+
+**Roadmap if someone wants the identity itself.** (1) State the Hann-window identity for $f,g\in C_c^2$ using smoother windows (for instance $\cos^4$) and recompute the matrices; (2) prove the explicit formula from a Hadamard/zero-counting development for $\xi$ (the missing items above), or instantiate `EF_lit` from `zeta23` for the $\zeta$ case; (3) for Davenport–Heilbronn, prove the functional equation of $\Lambda$ from Mathlib's functional equation for $L(s,\chi)$, $\chi$ mod $5$ (a Gauss-sum computation fixing $\kappa$), then repeat the contour argument with the combined coefficients; (4) connect the resulting integral formula to the closed-form autocorrelations used in the matrices.
+
 ## 18. Open Next Steps
 
-1. Close the remaining gaps in the Lean certificates: formalize the explicit formula for the packets used (the identity between the prime-side expression and $\sum_\rho\lvert\hat\varphi(\gamma_\rho)\rvert^2$) and the Jacobi, Sylvester and Weyl criteria. The numerical side (rigorous enclosures) is done.
+1. Formalize the explicit formula itself (Section 17.13 lists the missing ingredients and a roadmap); the cheapest partial step is to recompute the $\zeta$ matrices with a $C^2$ window and instantiate the `EF_lit` hypothesis of the `zeta23` project, which needs a Mathlib/Lean 4.33 build environment.
 2. Repeat Section 17.9 with a larger basis at the smaller-offset windows to separate the effect of the offset from the effect of bandwidth and basis size.
 3. Try the other prime-indexed ansätze not yet excluded (frequency-domain Gram factors, weights tied to $\Lambda(n)/\sqrt n$).
 4. Extend the zero list of the Davenport–Heilbronn function above height $600$ using the prime-side scan, and search for zeros with $\operatorname{Re}s>1$ explicitly.
 5. Check the claim about zeros of the Davenport–Heilbronn function on the line against the literature; Section 12 no longer states a proportion because I could not verify it.
-6. Study the Lean certificates from the 2026 papers (github.com/AxiomMath/ZetaZerosV2 and the Anthropic repository) to see what is and is not formally verified there.
 
 ## References
 
-- Lean 4.15.0 (leanprover/lean4, release v4.15.0), core library only; certificates in `Certificates.lean`. Ball arithmetic: python-flint 0.9.0 (Arb); F. Johansson, "Arb: efficient arbitrary-precision midpoint-radius interval arithmetic," *IEEE Trans. Comput.* 66 (2017), cited from memory.
+- Lean 4.15.0 (leanprover/lean4, release v4.15.0), core library only; certificates in `Certificates.lean`, bridge theorem in `ExplicitFormulaBridge.lean`. Ball arithmetic: python-flint 0.9.0 (Arb); F. Johansson, "Arb: efficient arbitrary-precision midpoint-radius interval arithmetic," *IEEE Trans. Comput.* 66 (2017), cited from memory.
 
 - A. Connes, C. Consani, H. Moscovici, "Zeta Spectral Triples," arXiv:2511.22755 (2025); A. Connes, C. Consani, "Spectral triples and ζ-cycles," arXiv:2106.01715 (2021). Cited from the abstracts and excerpts I read, not from their proofs.
 
